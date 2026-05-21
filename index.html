@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | كاميرا يدوية + إحصائيات متقدمة</title>
+    <title>نظام الجرد الذكي | كاميرا يدوية + غير معروف + ترتيب تنازلي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -190,7 +190,7 @@
     </div>
     <div id="globalProgress" class="progress-fixed"><div class="progress-fill" id="progressFill">0%</div></div>
 
-    <!-- تبويب المسح (مع اختيار كاميرا يدوي) -->
+    <!-- تبويب المسح (كاميرا يدوية + غير معروف + ترتيب تنازلي) -->
     <div id="tab-scan" class="panel active-pane">
         <div class="card" id="scanCard">
             <input type="text" id="barcodeInput" class="input-field" placeholder="✍️ امسح أو اكتب باركود / رقم صنف" autocomplete="off">
@@ -204,12 +204,12 @@
                 <button id="addOneBtn" class="btn-primary"><i class="fas fa-plus-circle"></i> +1 جرد</button>
                 <button id="resetInventoryBtn" class="btn-secondary"><i class="fas fa-trash-alt"></i> مسح الجرد</button>
             </div>
-            <h4 style="margin-top: 20px;">📋 آخر الجرد <span id="inventoryCount" style="background:#0f2b3d; color:white; border-radius:40px; padding:2px 12px;">0</span></h4>
+            <h4 style="margin-top: 20px;">📋 آخر الجرد (الأحدث أولاً) <span id="inventoryCount" style="background:#0f2b3d; color:white; border-radius:40px; padding:2px 12px;">0</span></h4>
             <div id="inventoryListContainer" class="inventory-list"></div>
         </div>
     </div>
 
-    <!-- تبويب الجرد -->
+    <!-- تبويب الجرد الكامل -->
     <div id="tab-inv" class="panel">
         <div class="card">
             <input type="text" id="searchInventory" class="search-input" placeholder="🔍 بحث في سجل الجرد (رقم / اسم)">
@@ -218,7 +218,7 @@
         </div>
     </div>
 
-    <!-- تبويب المرجع (ملف الرصيد الفعلي) - لم نلمسه -->
+    <!-- تبويب المرجع (ملف الرصيد الفعلي) - لم يتم التعديل عليه -->
     <div id="tab-stock" class="panel">
         <div class="card">
             <div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-file-excel"></i> رفع ملف الرصيد الفعلي (مرجع)</div>
@@ -255,7 +255,7 @@
         </div>
     </div>
 
-    <!-- تبويب المنتجات (رفع الملفات الأصلي لم نغيره) -->
+    <!-- تبويب المنتجات (دوال رفع الملفات الأصلية لم تُلمس) -->
     <div id="tab-products" class="panel">
         <div class="card">
             <div class="file-label" id="dbUploadArea"><i class="fas fa-upload"></i> رفع ملف المنتجات (باركود + رقم صنف + اسم) <input type="file" id="dbFileInput" style="display:none;" multiple></div>
@@ -286,10 +286,10 @@
 </div>
 
 <script>
-    // ========== قاعدة البيانات والمنطق الأصلي (محفوظ بالكامل دون تغيير في دوال رفع الملفات) ==========
+    // ========== قاعدة البيانات والمنطق الأصلي (دوال رفع الملفات لم تتغير) ==========
     let db;
     const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 16;
+    const DB_VERSION = 17;
     let inventory = [];
     let html5QrScanner = null, scanningActive = false;
     let availableCameras = [];
@@ -392,7 +392,7 @@
 
     let pendingProductFiles = [];
     document.getElementById('dbFileInput').addEventListener('change', (e) => { pendingProductFiles = Array.from(e.target.files); });
-    // دالة رفع المنتجات الأصلية (لم نغيرها)
+    // دالة رفع المنتجات الأصلية (لم نغيرها مطلقاً)
     async function processProductFiles(skipBlacklist = false) {
         if (!pendingProductFiles.length) { showToast("اختر ملفات أولاً", true); return; }
         const sourceId = Date.now();
@@ -428,7 +428,7 @@
     document.getElementById('processDbBtn').onclick = () => processProductFiles(false);
     document.getElementById('processDbNoFilterBtn').onclick = () => processProductFiles(true);
 
-    // البحث والتعرف مع الصوت واللون
+    // دالة البحث والتعرف مع إضافة "غير معروف" تلقائياً
     async function lookupWithEffects(val) {
         if (!val) return false;
         let cleanVal = val.replace(/\.0+$/, '').trim();
@@ -454,14 +454,30 @@
                 updateAllUI();
                 return true;
             } else {
+                // لم يتم التعرف: نضيف "غير معروف" إلى الجرد فوراً
                 manualCode.value = cleanVal; productNameField.value = '';
                 playBeep(false); flashCard('red');
-                showToast(`✗ المنتج غير مسجل في القاعدة`, true);
+                // إضافة مباشرة إلى الجرد باسم "غير معروف"
+                const invTx = db.transaction("inventory", "readwrite");
+                const store = invTx.objectStore("inventory");
+                const unknownKey = cleanVal;
+                const existing = await new Promise(r => store.get(unknownKey).onsuccess = e => r(e.target.result));
+                if (existing) {
+                    existing.qty++;
+                    store.put(existing);
+                } else {
+                    store.put({ key: unknownKey, name: "❓ غير معروف", qty: 1, item_no: unknownKey, barcode: unknownKey });
+                }
+                await new Promise(r => { invTx.oncomplete = r; });
+                showToast(`⚠️ المنتج غير مسجل - تم إضافة "غير معروف" +1`, true, 2000);
+                updateAllUI();
                 return false;
             }
         }
     }
+
     barcodeInput.addEventListener('input', async (e) => { await lookupWithEffects(e.target.value.trim()); });
+
     document.getElementById('addOneBtn').onclick = async () => {
         let raw = barcodeInput.value.trim();
         if (!raw) { showToast("ادخل باركود أو رقم صنف", true); return; }
@@ -480,6 +496,7 @@
             showToast(`📦 ${match.name} +1`, false);
             updateAllUI(); barcodeInput.value = '';
         } else {
+            // إضافة يدوية لغير معروف
             const invTx = db.transaction("inventory", "readwrite");
             const store = invTx.objectStore("inventory");
             const unknownKey = cleanRaw;
@@ -491,6 +508,7 @@
             updateAllUI(); barcodeInput.value = '';
         }
     };
+
     document.getElementById('resetInventoryBtn').onclick = () => { if (confirm("مسح كل الجرد؟")) { const tx = db.transaction("inventory", "readwrite"); tx.objectStore("inventory").clear(); tx.oncomplete = () => { updateAllUI(); showToast("تم مسح الجرد"); }; } };
 
     let filterInv = "", filterCmp = "";
@@ -502,7 +520,7 @@
         tx.objectStore("inventory").getAll().onsuccess = e => {
             let inv = e.target.result;
             if (filterInv) inv = inv.filter(i => i.name.toLowerCase().includes(filterInv) || i.key.toLowerCase().includes(filterInv));
-            document.getElementById('inventoryFullTable').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية</th> </thead><tbody>${inv.map(i => `<tr><td style="font-family:monospace;">${escapeHtml(i.key)}</td><td>${escapeHtml(i.name)}</td><td>${i.qty}</td></tr>`).join('')}</tbody>点心`;
+            document.getElementById('inventoryFullTable').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية</th> </thead><tbody>${inv.map(i => `<tr><td style="font-family:monospace;">${escapeHtml(i.key)}</td><td>${escapeHtml(i.name)}</td><td>${i.qty}</td>`).join('')}</tbody>点心`;
         };
     }
 
@@ -560,6 +578,7 @@
         document.getElementById('totalProductsStat').innerText = prods.length;
         document.getElementById('totalInventoryStat').innerText = inv.length;
         document.getElementById('sessionScansStat').innerText = inv.reduce((s,i)=>s+i.qty,0);
+        // عرض الجرد في واجهة المسح: ترتيب تنازلي (الأحدث أولاً)
         let invHtml = `<div class="inventory-list">`;
         [...inv].reverse().forEach(item => {
             invHtml += `<div class="product-card"><div class="product-info"><div><strong>${escapeHtml(item.name)}</strong><br><small>رقم: ${escapeHtml(item.item_no || item.key)}</small></div><div class="product-quantity">${item.qty}</div></div><div class="product-actions"><button class="icon-btn" data-code="${escapeHtml(item.key)}" data-delta="-1"><i class="fas fa-minus-circle"></i> -1</button><button class="icon-btn" data-code="${escapeHtml(item.key)}" data-delta="1"><i class="fas fa-plus-circle"></i> +1</button><button class="icon-btn edit-item" data-code="${escapeHtml(item.key)}"><i class="fas fa-pen"></i> تعديل</button><button class="icon-btn del-item" data-code="${escapeHtml(item.key)}"><i class="fas fa-trash"></i> حذف</button></div></div>`;
@@ -567,9 +586,9 @@
         invHtml += `</div>`;
         document.getElementById('inventoryListContainer').innerHTML = invHtml;
         renderInventoryTable();
-        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
+        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td>`).join('')}</tbody>点心`;
         renderComparison();
-        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody>点心`;
+        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td>`).join('')}</tbody>点心`;
         attachEvents();
     }
     function attachEvents() {
@@ -599,7 +618,7 @@
     document.getElementById('exportProductsBtn').onclick = () => { const tx = db.transaction("products", "readonly"); tx.objectStore("products").getAll().onsuccess = e => { let data = e.target.result.map(p => ({ "رقم الصنف": p.item_no||'', "الاسم": p.name||'', "الباركود": p.barcode||'' })); exportToExcel(data, "المنتجات", "منتجات_"+Date.now()); }; };
     document.getElementById('exportCompareBtn').onclick = () => { const tx = db.transaction(["inventory","stock"], "readonly"); Promise.all([new Promise(r=>tx.objectStore("inventory").getAll().onsuccess=e=>r(e.target.result)), new Promise(r=>tx.objectStore("stock").getAll().onsuccess=e=>r(e.target.result))]).then(([inv,stock])=>{ let allKeys=new Set([...inv.map(i=>i.key),...stock.map(s=>s.key)]); let data=[...allKeys].map(k=>{ let i=inv.find(x=>x.key===k); let s=stock.find(x=>x.key===k); return { "رقم الصنف":k, "الاسم":(i||s)?.name||'', "الفعلي":s?s.qty:0, "المجرد":i?i.qty:0, "الفرق":(i?i.qty:0)-(s?s.qty:0) }; }); exportToExcel(data, "المقارنة", "مقارنة_"+Date.now()); }); };
 
-    // ========== الكاميرا مع تحديد يدوي ==========
+    // ========== الكاميرا مع تحديد يدوي (دون التأثير على باقي الكود) ==========
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -649,7 +668,7 @@
     document.getElementById('switchCamBtn').onclick = switchCamera;
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
-    // رفع المرجع (لم نلمسه)
+    // رفع المرجع (نفس الكود الأصلي دون تعديل)
     let pendingStockFiles = [];
     document.getElementById('stockFileInput').addEventListener('change', (e) => { pendingStockFiles = Array.from(e.target.files); });
     async function processStockFiles() {
@@ -699,7 +718,7 @@
     }
     document.getElementById('processStockBtn').onclick = processStockFiles;
 
-    // إضافة يدوية وغيرها
+    // إضافة يدوية وغيرها من التوابع الأساسية
     function initDB() { const req = indexedDB.open(DB_NAME, DB_VERSION); req.onupgradeneeded = (e) => { db = e.target.result; if (!db.objectStoreNames.contains("products")) { const prodStore = db.createObjectStore("products", { keyPath: "id", autoIncrement: true }); prodStore.createIndex("item_no","item_no"); prodStore.createIndex("barcode","barcode"); } if (!db.objectStoreNames.contains("inventory")) db.createObjectStore("inventory", { keyPath: "key" }); if (!db.objectStoreNames.contains("stock")) db.createObjectStore("stock", { keyPath: "key" }); if (!db.objectStoreNames.contains("uploadedFiles")) db.createObjectStore("uploadedFiles", { keyPath:"id", autoIncrement:true }); }; req.onsuccess = (e) => { db = e.target.result; updateAllUI(); listCameras(); }; req.onerror = (e) => console.error(e); }
     document.getElementById('globalResetBtn').onclick = () => { if (confirm("حذف كل البيانات نهائياً؟")) indexedDB.deleteDatabase(DB_NAME).onsuccess = () => location.reload(); };
     document.getElementById('globalManualBtn').onclick = () => document.getElementById('productModal').style.display = 'flex';
