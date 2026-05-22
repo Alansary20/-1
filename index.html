@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | إصدار مستقر نهائي</title>
+    <title>نظام الجرد الذكي | كاميرا بدون تكرار</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -289,11 +289,12 @@
     // -------------------------------------------------------------
     let db;
     const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 23;
+    const DB_VERSION = 25;
     let inventory = [];
     let html5QrScanner = null, scanningActive = false;
     let availableCameras = [];
     let currentCameraId = null;
+    let isProcessingScan = false;  // قفل لمنع التكرار
 
     const barcodeInput = document.getElementById('barcodeInput');
     const manualCode = document.createElement('input'); manualCode.type = 'hidden';
@@ -533,49 +534,56 @@
     document.getElementById('processStockBtn').onclick = processStockFiles;
 
     // -------------------------------------------------------------
-    // البحث والتعرف على الباركود مع "غير معروف"
+    // البحث والتعرف مع قفل لمنع التكرار (حل مشكلة الكاميرا)
     // -------------------------------------------------------------
-    async function lookupWithEffects(val) {
+    async function lookupWithEffects(val, fromCamera = false) {
         if (!val) return false;
-        let cleanVal = val.replace(/\.0+$/, '').trim();
-        const tx = db.transaction(["products", "stock"], "readonly");
-        const products = await new Promise(r => tx.objectStore("products").getAll().onsuccess = e => r(e.target.result));
-        let match = products.find(p => p.barcode === cleanVal || p.item_no === cleanVal);
-        if (match) {
-            manualCode.value = match.item_no || match.barcode;
-            productNameField.value = match.name;
-            playBeep(true); flashCard('green');
-            showToast(`✓ تم التعرف: ${match.name}`, false, 1200);
-            return true;
-        } else {
-            const stockStore = tx.objectStore("stock");
-            const stockItem = await new Promise(r => stockStore.get(cleanVal).onsuccess = e => r(e.target.result));
-            if (stockItem) {
-                const addTx = db.transaction(["products"], "readwrite");
-                addTx.objectStore("products").add({ id: generateUniqueId(), barcode: cleanVal, item_no: stockItem.key, name: stockItem.name, sourceId: "auto" });
-                await new Promise(r => { addTx.oncomplete = r; });
-                manualCode.value = stockItem.key; productNameField.value = stockItem.name;
+        if (fromCamera && isProcessingScan) return false;
+        if (fromCamera) isProcessingScan = true;
+        try {
+            let cleanVal = val.replace(/\.0+$/, '').trim();
+            const tx = db.transaction(["products", "stock"], "readonly");
+            const products = await new Promise(r => tx.objectStore("products").getAll().onsuccess = e => r(e.target.result));
+            let match = products.find(p => p.barcode === cleanVal || p.item_no === cleanVal);
+            if (match) {
+                manualCode.value = match.item_no || match.barcode;
+                productNameField.value = match.name;
                 playBeep(true); flashCard('green');
-                showToast(`✓ تم إضافة تلقائياً: ${stockItem.name}`, false, 1500);
-                updateAllUI();
+                showToast(`✓ تم التعرف: ${match.name}`, false, 1200);
                 return true;
             } else {
-                manualCode.value = cleanVal; productNameField.value = '';
-                playBeep(false); flashCard('red');
-                const invTx = db.transaction("inventory", "readwrite");
-                const store = invTx.objectStore("inventory");
-                const unknownKey = cleanVal;
-                const existing = await new Promise(r => store.get(unknownKey).onsuccess = e => r(e.target.result));
-                if (existing) { existing.qty++; store.put(existing); }
-                else { store.put({ key: unknownKey, name: "❓ غير معروف", qty: 1, item_no: unknownKey, barcode: unknownKey }); }
-                await new Promise(r => { invTx.oncomplete = r; });
-                showToast(`⚠️ منتج غير مسجل - تم إضافة "غير معروف" +1`, true, 2000);
-                updateAllUI();
-                return false;
+                const stockStore = tx.objectStore("stock");
+                const stockItem = await new Promise(r => stockStore.get(cleanVal).onsuccess = e => r(e.target.result));
+                if (stockItem) {
+                    const addTx = db.transaction(["products"], "readwrite");
+                    addTx.objectStore("products").add({ id: generateUniqueId(), barcode: cleanVal, item_no: stockItem.key, name: stockItem.name, sourceId: "auto" });
+                    await new Promise(r => { addTx.oncomplete = r; });
+                    manualCode.value = stockItem.key; productNameField.value = stockItem.name;
+                    playBeep(true); flashCard('green');
+                    showToast(`✓ تم إضافة تلقائياً: ${stockItem.name}`, false, 1500);
+                    updateAllUI();
+                    return true;
+                } else {
+                    manualCode.value = cleanVal; productNameField.value = '';
+                    playBeep(false); flashCard('red');
+                    const invTx = db.transaction("inventory", "readwrite");
+                    const store = invTx.objectStore("inventory");
+                    const unknownKey = cleanVal;
+                    const existing = await new Promise(r => store.get(unknownKey).onsuccess = e => r(e.target.result));
+                    if (existing) { existing.qty++; store.put(existing); }
+                    else { store.put({ key: unknownKey, name: "❓ غير معروف", qty: 1, item_no: unknownKey, barcode: unknownKey }); }
+                    await new Promise(r => { invTx.oncomplete = r; });
+                    showToast(`⚠️ منتج غير مسجل - تم إضافة "غير معروف" +1`, true, 2000);
+                    updateAllUI();
+                    return false;
+                }
             }
+        } finally {
+            if (fromCamera) setTimeout(() => { isProcessingScan = false; }, 300);
         }
     }
-    barcodeInput.addEventListener('input', async (e) => { await lookupWithEffects(e.target.value.trim()); });
+
+    barcodeInput.addEventListener('input', async (e) => { await lookupWithEffects(e.target.value.trim(), false); });
 
     document.getElementById('addOneBtn').onclick = async () => {
         let raw = barcodeInput.value.trim();
@@ -693,7 +701,7 @@
         renderInventoryTable();
         document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
         renderComparison();
-        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody>点心`;
+        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></td>`).join('')}</tbody>点心`;
     }
     
     async function updateInventoryQuantity(key, delta) {
@@ -743,7 +751,9 @@
     document.getElementById('exportProductsBtn').onclick = () => { const tx = db.transaction("products", "readonly"); tx.objectStore("products").getAll().onsuccess = e => { let data = e.target.result.map(p => ({ "رقم الصنف": p.item_no||'', "الاسم": p.name||'', "الباركود": p.barcode||'' })); exportToExcel(data, "المنتجات", "منتجات_"+Date.now()); }; };
     document.getElementById('exportCompareBtn').onclick = () => { const tx = db.transaction(["inventory","stock"], "readonly"); Promise.all([new Promise(r=>tx.objectStore("inventory").getAll().onsuccess=e=>r(e.target.result)), new Promise(r=>tx.objectStore("stock").getAll().onsuccess=e=>r(e.target.result))]).then(([inv,stock])=>{ let allKeys=new Set([...inv.map(i=>i.key),...stock.map(s=>s.key)]); let data=[...allKeys].map(k=>{ let i=inv.find(x=>x.key===k); let s=stock.find(x=>x.key===k); return { "رقم الصنف":k, "الاسم":(i||s)?.name||'', "الفعلي":s?s.qty:0, "المجرد":i?i.qty:0, "الفرق":(i?i.qty:0)-(s?s.qty:0) }; }); exportToExcel(data, "المقارنة", "مقارنة_"+Date.now()); }); };
 
-    // الكاميرا اليدوية
+    // -------------------------------------------------------------
+    // الكاميرا مع قفل وإغلاق فوري بعد أول مسح (يمنع التكرار)
+    // -------------------------------------------------------------
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -763,9 +773,11 @@
             }
         } catch (err) { console.warn(err); showToast("تعذر الوصول للكاميرات", true); }
     }
+    
     async function startCamera(cameraId = null) {
         if (scanningActive && html5QrScanner) await html5QrScanner.stop().catch(()=>{});
         scanningActive = false;
+        isProcessingScan = false;
         const cameraDiv = document.getElementById('cameraDiv');
         cameraDiv.classList.remove('hidden');
         try {
@@ -773,13 +785,29 @@
             if (!targetId) throw new Error("لا توجد كاميرا محددة");
             html5QrScanner = new Html5Qrcode("reader2");
             await html5QrScanner.start({ deviceId: { exact: targetId } }, { fps: 10, qrbox: { width: 250, height: 250 } },
-                async (decoded) => { barcodeInput.value = decoded; await lookupWithEffects(decoded); closeCamera(); },
+                async (decoded) => {
+                    if (isProcessingScan) return;
+                    // إغلاق الكاميرا فوراً بعد أول مسح ناجح
+                    await closeCamera();
+                    barcodeInput.value = decoded;
+                    await lookupWithEffects(decoded, true);
+                },
                 (err) => {});
             scanningActive = true;
             currentCameraId = targetId;
         } catch (err) { showToast("خطأ في الكاميرا: " + err.message, true); cameraDiv.classList.add('hidden'); scanningActive = false; }
     }
-    async function closeCamera() { if (html5QrScanner && scanningActive) await html5QrScanner.stop().catch(()=>{}); scanningActive=false; document.getElementById('cameraDiv').classList.add('hidden'); }
+    
+    async function closeCamera() { 
+        if (html5QrScanner && scanningActive) {
+            await html5QrScanner.stop().catch(()=>{});
+            await html5QrScanner.clear().catch(()=>{});
+        }
+        scanningActive = false;
+        document.getElementById('cameraDiv').classList.add('hidden');
+        isProcessingScan = false;
+    }
+    
     async function switchCamera() {
         if (!availableCameras.length) { await listCameras(); }
         if (availableCameras.length === 0) { showToast("لا توجد كاميرات", true); return; }
@@ -794,50 +822,28 @@
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
     // -------------------------------------------------------------
-    // دالة إعادة التعيين المحسّنة (تعمل على GitHub Pages)
+    // إعادة التعيين (تعمل على GitHub Pages)
     // -------------------------------------------------------------
     window.resetAll = function() {
         if (confirm("⚠️ سيتم حذف جميع البيانات (المنتجات، الجرد، المرجع) بشكل نهائي. لا يمكن التراجع. متابعة؟")) {
             showToast("جاري حذف البيانات...", false, 1500);
-            
-            // إغلاق اتصال قاعدة البيانات أولاً
-            if (db) {
-                db.close();
-                db = null;
-            }
-            
-            // حذف قاعدة البيانات
+            if (html5QrScanner && scanningActive) { html5QrScanner.stop().catch(()=>{}); }
+            if (db) { db.close(); db = null; }
             const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
             deleteRequest.onsuccess = function() {
-                console.log("Database deleted successfully");
-                // مسح أي بيانات متبقية في localStorage أو sessionStorage
-                try {
-                    localStorage.clear();
-                    sessionStorage.clear();
-                } catch(e) {}
-                // إعادة تحميل الصفحة بالقوة
+                localStorage.clear();
+                sessionStorage.clear();
                 window.location.href = window.location.href.split('#')[0];
             };
-            deleteRequest.onerror = function() {
-                console.error("Error deleting database");
-                // محاولة بديلة: إعادة تحميل الصفحة بعد محاولة حذف IndexedDB
-                setTimeout(() => {
-                    window.location.reload(true);
-                }, 500);
-            };
-            deleteRequest.onblocked = function() {
-                console.warn("Database deletion blocked");
-                setTimeout(() => {
-                    window.location.reload(true);
-                }, 500);
-            };
+            deleteRequest.onerror = function() { setTimeout(() => window.location.reload(true), 500); };
+            deleteRequest.onblocked = function() { setTimeout(() => window.location.reload(true), 500); };
         }
     };
-    
-    // ربط زر إعادة التعيين بالدالة الجديدة
     document.getElementById('globalResetBtn').onclick = () => resetAll();
 
-    // توابع الإضافة اليدوية والإعدادات العامة
+    // -------------------------------------------------------------
+    // التهيئة النهائية
+    // -------------------------------------------------------------
     function initDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = (e) => {
