@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | كاميرا محسّنة</title>
+    <title>نظام الجرد الذكي | ماسح طبيعي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -81,18 +81,6 @@
         .camera-wrapper {
             border-radius: 32px; overflow: hidden; margin-top: 12px; background: #000; position: relative; max-width: 400px; margin-left: auto; margin-right: auto;
         }
-        /* مستطيل المسح في الأعلى */
-        #reader2__scan_region {
-            position: absolute !important;
-            top: 10% !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            border: 2px solid #0f2b3d !important;
-            box-shadow: 0 0 0 4px rgba(15,43,61,0.3);
-            border-radius: 12px;
-            width: 280px !important;
-            height: 100px !important;
-        }
         .hidden { display: none; }
         .toast { position: fixed; bottom: 80px; left: 20px; right: 20px; background: #1e293b; color: white; text-align: center; padding: 12px; border-radius: 60px; font-size: 0.85rem; z-index: 2100; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
         .flash-green { background: #bbf7d0 !important; box-shadow: 0 0 0 3px #22c55e; transition: 0.08s; }
@@ -126,7 +114,6 @@
         <button class="tab-btn" data-tab="tab-cmp"><i class="fas fa-chart-line"></i> المقارنة</button>
         <button class="tab-btn" data-tab="tab-products"><i class="fas fa-archive"></i> المنتجات</button>
     </div>
-
     <!-- تبويب المسح -->
     <div id="tab-scan" class="panel active-pane">
         <div class="card" id="scanCard">
@@ -145,68 +132,12 @@
             <div id="inventoryListContainer" class="inventory-list"></div>
         </div>
     </div>
-
-    <!-- تبويب الجرد الكامل -->
-    <div id="tab-inv" class="panel">
-        <div class="card">
-            <input type="text" id="searchInventory" class="search-input" placeholder="🔍 بحث في سجل الجرد">
-            <button id="exportInventoryBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير Excel</button>
-            <div id="inventoryFullTable" class="data-wrapper"></div>
-        </div>
-    </div>
-
-    <!-- تبويب المرجع -->
-    <div id="tab-stock" class="panel">
-        <div class="card">
-            <div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-file-excel"></i> رفع ملف الرصيد الفعلي (مرجع)</div>
-            <div class="file-label" id="stockUploadArea"><i class="fas fa-upload"></i> اختر ملف Excel <input type="file" id="stockFileInput" style="display:none;" accept=".xlsx,.xlsm,.xlsb"></div>
-            <div style="display:flex; gap:8px; margin-bottom:12px;">
-                <select id="stockModeSelect" style="flex:1; padding:10px; border-radius:40px; background:white; border:1px solid #cbd5e1;"><option value="replace">استبدال</option><option value="merge">دمج</option></select>
-                <button id="processStockBtn" class="btn-primary" style="width:auto; padding:10px 18px;"><i class="fas fa-play"></i> معالجة</button>
-            </div>
-            <button id="exportStockBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المرجع</button>
-            <div id="stockTableContainer" class="data-wrapper"></div>
-        </div>
-    </div>
-
-    <!-- تبويب المقارنة -->
-    <div id="tab-cmp" class="panel">
-        <div class="card">
-            <input type="text" id="searchCompare" class="search-input" placeholder="🔍 بحث في المقارنة">
-            <div class="compare-stats-grid">
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsActualItems">0</div><div class="compare-stat-label">📦 الفعلي</div></div>
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsIncreaseCount">0</div><div class="compare-stat-label">⬆️ زيادة</div></div>
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsDecreaseCount">0</div><div class="compare-stat-label">⬇️ نقص</div></div>
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsMatchCount">0</div><div class="compare-stat-label">✅ مطابق</div></div>
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsScannedCount">0</div><div class="compare-stat-label">🔄 المجرود</div></div>
-                <div class="compare-stat-card"><div class="compare-stat-number" id="statsTotalDiff">0</div><div class="compare-stat-label">⚖️ الفرق</div></div>
-            </div>
-            <div class="filter-btns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                <button class="filter-btn active" data-filter="all">الكل</button>
-                <button class="filter-btn" data-filter="increase">⬆️ زيادة</button>
-                <button class="filter-btn" data-filter="decrease">⬇️ نقص</button>
-                <button class="filter-btn" data-filter="match">✅ مطابق</button>
-            </div>
-            <button id="exportCompareBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المقارنة</button>
-            <div id="comparisonTableDiv" class="data-wrapper"></div>
-        </div>
-    </div>
-
-    <!-- تبويب المنتجات -->
-    <div id="tab-products" class="panel">
-        <div class="card">
-            <div class="file-label" id="dbUploadArea"><i class="fas fa-upload"></i> رفع ملف المنتجات <input type="file" id="dbFileInput" style="display:none;" multiple></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-                <button id="processDbBtn" class="btn-primary">معالجة عادي</button>
-                <button id="processDbNoFilterBtn" class="btn-secondary">بدون فلتر</button>
-            </div>
-            <button id="exportProductsBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المنتجات</button>
-            <div id="productsTableContainer" class="data-wrapper"></div>
-            <button id="clearProductsBtn" class="btn-secondary" style="margin-top:12px;">مسح كل المنتجات</button>
-        </div>
-    </div>
+    <!-- باقي التبويبات -->
+    <div id="tab-inv" class="panel"><div class="card"><input type="text" id="searchInventory" class="search-input" placeholder="🔍 بحث في سجل الجرد"><button id="exportInventoryBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير Excel</button><div id="inventoryFullTable" class="data-wrapper"></div></div></div>
+    <div id="tab-stock" class="panel"><div class="card"><div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-file-excel"></i> رفع ملف الرصيد الفعلي (مرجع)</div><div class="file-label" id="stockUploadArea"><i class="fas fa-upload"></i> اختر ملف Excel <input type="file" id="stockFileInput" style="display:none;" accept=".xlsx,.xlsm,.xlsb"></div><div style="display:flex; gap:8px; margin-bottom:12px;"><select id="stockModeSelect" style="flex:1; padding:10px; border-radius:40px; background:white; border:1px solid #cbd5e1;"><option value="replace">استبدال</option><option value="merge">دمج</option></select><button id="processStockBtn" class="btn-primary" style="width:auto; padding:10px 18px;"><i class="fas fa-play"></i> معالجة</button></div><button id="exportStockBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المرجع</button><div id="stockTableContainer" class="data-wrapper"></div></div></div>
+    <div id="tab-cmp" class="panel"><div class="card"><input type="text" id="searchCompare" class="search-input" placeholder="🔍 بحث في المقارنة"><div class="compare-stats-grid"><div class="compare-stat-card"><div class="compare-stat-number" id="statsActualItems">0</div><div class="compare-stat-label">📦 الفعلي</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsIncreaseCount">0</div><div class="compare-stat-label">⬆️ زيادة</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsDecreaseCount">0</div><div class="compare-stat-label">⬇️ نقص</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsMatchCount">0</div><div class="compare-stat-label">✅ مطابق</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsScannedCount">0</div><div class="compare-stat-label">🔄 المجرود</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsTotalDiff">0</div><div class="compare-stat-label">⚖️ الفرق</div></div></div><div class="filter-btns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"><button class="filter-btn active" data-filter="all">الكل</button><button class="filter-btn" data-filter="increase">⬆️ زيادة</button><button class="filter-btn" data-filter="decrease">⬇️ نقص</button><button class="filter-btn" data-filter="match">✅ مطابق</button></div><button id="exportCompareBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المقارنة</button><div id="comparisonTableDiv" class="data-wrapper"></div></div></div>
+    <div id="tab-products" class="panel"><div class="card"><div class="file-label" id="dbUploadArea"><i class="fas fa-upload"></i> رفع ملف المنتجات <input type="file" id="dbFileInput" style="display:none;" multiple></div><div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;"><button id="processDbBtn" class="btn-primary">معالجة عادي</button><button id="processDbNoFilterBtn" class="btn-secondary">بدون فلتر</button></div><button id="exportProductsBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المنتجات</button><div id="productsTableContainer" class="data-wrapper"></div><button id="clearProductsBtn" class="btn-secondary" style="margin-top:12px;">مسح كل المنتجات</button></div></div>
 </div>
-
 <div id="productModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:3000;">
     <div style="background:white; border-radius:44px; padding:24px; width:90%; max-width:380px;">
         <h3>➕ إضافة منتج</h3>
@@ -214,11 +145,10 @@
         <div style="display:flex; gap:12px; margin-top:12px;"><button id="saveProductBtn" style="background:#0f2b3d; color:white; border:none; padding:12px; border-radius:40px; flex:1;">حفظ</button><button id="closeModalBtn" style="background:#eef2f6; border:none; padding:12px; border-radius:40px; flex:1;">إلغاء</button></div>
     </div>
 </div>
-
 <script>
-    // ========== قاعدة البيانات ==========
+    // ---------- قاعدة البيانات ----------
     let db;
-    const DB_NAME = "InvSmartDB4";
+    const DB_NAME = "InvSmartDB_final";
     const DB_VERSION = 1;
     let inventory = [];
     let html5QrScanner = null;
@@ -232,7 +162,6 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-
     function playBeep(success) {
         if (!audioCtx) initAudio();
         try {
@@ -253,7 +182,6 @@
             }
         } catch(e) {}
     }
-
     function flashCard(color) {
         const card = document.getElementById('scanCard');
         if (card) {
@@ -261,7 +189,6 @@
             setTimeout(() => card.classList.remove('flash-green', 'flash-red'), 400);
         }
     }
-
     function showToast(msg, isErr = false, duration = 3000) {
         let t = document.querySelector('.toast'); if (t) t.remove();
         const toast = document.createElement('div'); toast.className = 'toast';
@@ -270,7 +197,6 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), duration);
     }
-
     function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
     function generateUniqueId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now(); }
 
@@ -291,7 +217,6 @@
             reader.readAsArrayBuffer(file);
         });
     }
-
     function getCommonBlacklist(rows) {
         const counts = new Map();
         for (let i = 0; i < Math.min(rows.length, 100); i++) {
@@ -301,7 +226,6 @@
         const black = []; for (let [txt, c] of counts.entries()) if (c > 15) black.push(txt);
         return black;
     }
-
     function parseProductRow(row, blacklist) {
         let res = { barcode: "", item_no: "", name: "" };
         if (!Array.isArray(row)) return res;
@@ -324,7 +248,6 @@
         if (candidates.text.length) res.name = candidates.text[0];
         return res;
     }
-
     function parseStockRow(row, blacklist, qtyCol) {
         let d = { item_no: "", name: "", qty: 0 };
         if (qtyCol !== undefined && row[qtyCol] !== undefined) {
@@ -506,7 +429,7 @@
         }
     };
 
-    // ========== الكاميرا (مستطيل في الأعلى) ==========
+    // ========== كاميرا طبيعية جديدة ==========
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -527,20 +450,14 @@
         } catch (err) { console.warn(err); showToast("تعذر الوصول للكاميرات", true); }
     }
 
-    function applyScanRegionStyle() {
-        const scanRegion = document.querySelector('#reader2__scan_region');
-        if (scanRegion) {
-            scanRegion.style.position = 'absolute';
-            scanRegion.style.top = '10%';
-            scanRegion.style.left = '50%';
-            scanRegion.style.transform = 'translateX(-50%)';
-            scanRegion.style.width = '280px';
-            scanRegion.style.height = '100px';
-        }
-    }
-
     async function startCamera(cameraId = null) {
-        if (scanningActive) await closeCamera();
+        // إيقاف أي ماسح سابق بشكل طبيعي
+        if (html5QrScanner) {
+            await html5QrScanner.stop().catch(() => {});
+            await html5QrScanner.clear().catch(() => {});
+            html5QrScanner = null;
+        }
+        scanningActive = false;
         const cameraDiv = document.getElementById('cameraDiv');
         cameraDiv.classList.remove('hidden');
         try {
@@ -564,9 +481,20 @@
             );
             scanningActive = true;
             currentCameraId = targetId;
-            setTimeout(applyScanRegionStyle, 600);
+            // تحريك مستطيل المسح للأعلى (اختياري)
+            setTimeout(() => {
+                const scanRegion = document.querySelector('#reader2__scan_region');
+                if (scanRegion) {
+                    scanRegion.style.position = 'absolute';
+                    scanRegion.style.top = '10%';
+                    scanRegion.style.left = '50%';
+                    scanRegion.style.transform = 'translateX(-50%)';
+                    scanRegion.style.width = '280px';
+                    scanRegion.style.height = '100px';
+                }
+            }, 600);
             initAudio();
-            playBeep(true); // تفعيل الصوت
+            playBeep(true);
         } catch (err) {
             showToast("خطأ في الكاميرا: " + err.message, true);
             cameraDiv.classList.add('hidden');
@@ -575,9 +503,10 @@
     }
 
     async function closeCamera() {
-        if (html5QrScanner && scanningActive) {
+        if (html5QrScanner) {
             await html5QrScanner.stop().catch(() => {});
             await html5QrScanner.clear().catch(() => {});
+            html5QrScanner = null;
         }
         scanningActive = false;
         document.getElementById('cameraDiv').classList.add('hidden');
@@ -601,7 +530,7 @@
     document.getElementById('switchCamBtn').onclick = switchCamera;
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
-    // ========== تحديث واجهة المستخدم ==========
+    // ========== تحديث الواجهة ==========
     async function updateAllUI() {
         if (!db) return;
         const tx = db.transaction(["inventory", "products", "stock"], "readonly");
@@ -614,7 +543,6 @@
         document.getElementById('totalInventoryStat').innerText = inv.length;
         document.getElementById('sessionScansStat').innerText = inv.reduce((s, i) => s + i.qty, 0);
 
-        // قائمة الجرد
         let invHtml = `<div class="inventory-list">`;
         [...inv].reverse().forEach(item => {
             invHtml += `<div class="product-card">
@@ -633,11 +561,9 @@
         invHtml += `</div>`;
         document.getElementById('inventoryListContainer').innerHTML = invHtml;
 
-        // جداول
         document.getElementById('inventoryFullTable').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الكمية</th></thead><tbody>${inv.map(i => `<tr><td>${escapeHtml(i.key)}</td><td>${escapeHtml(i.name)}</td><td>${i.qty}</td></tr>`).join('')}</tbody></table>`;
         document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th></thead><tbody>${stock.map(s => `<tr><td>${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody></table>`;
 
-        // المقارنة
         const allCodes = new Set([...inv.map(i => i.key), ...stock.map(s => s.key)]);
         let cmpRows = [...allCodes].map(k => {
             let i = inv.find(x => x.key === k);
@@ -669,11 +595,9 @@
             return `<tr><td>${escapeHtml(r.itemNo)}</td><td>${escapeHtml(r.name)}</td><td>${r.qs}</td><td>${r.qi}</td><td class="${cls}">${icon} ${r.diff > 0 ? '+' : ''}${r.diff}</td></tr>`;
         }).join('')}</tbody></table>`;
 
-        // المنتجات
         document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th></thead><tbody>${prods.map(p => `<tr><td>${escapeHtml(p.item_no || '-')}</td><td>${escapeHtml(p.name || '-')}</td><td>${escapeHtml(p.barcode || '-')}</td><td><button class="icon-btn" onclick="window.deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody></table>`;
     }
 
-    // وظائف التحكم في الجرد
     window.updateQuantity = async function(key, delta) {
         const tx = db.transaction("inventory", "readwrite");
         const store = tx.objectStore("inventory");
@@ -714,14 +638,12 @@
         updateAllUI();
     };
 
-    // أزرار التصفية
     document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         updateAllUI();
     }));
 
-    // تصدير Excel
     function exportToExcel(data, sheetName, fileName) {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
@@ -771,10 +693,9 @@
         });
     };
 
-    // باقي الأزرار
     document.getElementById('globalResetBtn').onclick = () => {
         if (confirm("⚠️ سيتم حذف جميع البيانات نهائياً. متابعة؟")) {
-            if (html5QrScanner && scanningActive) html5QrScanner.stop().catch(() => {});
+            if (html5QrScanner) { html5QrScanner.stop().catch(() => {}); html5QrScanner = null; }
             if (db) { db.close(); db = null; }
             const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
             deleteRequest.onsuccess = () => window.location.reload();
@@ -816,7 +737,6 @@
         updateAllUI();
     }));
 
-    // بدء قاعدة البيانات
     function initDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = (e) => {
