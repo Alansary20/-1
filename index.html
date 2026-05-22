@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | كاميرا بدون تكرار</title>
+    <title>نظام الجرد الذكي | كاميرا سريعة مع اختيار تلقائي للكاميرا رقم 3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -289,19 +289,18 @@
     // -------------------------------------------------------------
     let db;
     const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 25;
+    const DB_VERSION = 27;
     let inventory = [];
     let html5QrScanner = null, scanningActive = false;
     let availableCameras = [];
     let currentCameraId = null;
-    let isProcessingScan = false;  // قفل لمنع التكرار
+    let isProcessingScan = false;
 
     const barcodeInput = document.getElementById('barcodeInput');
     const manualCode = document.createElement('input'); manualCode.type = 'hidden';
     const productNameField = document.createElement('input'); productNameField.type = 'hidden';
     document.body.appendChild(manualCode); document.body.appendChild(productNameField);
 
-    // دوال الصوت والألوان
     function playBeep(success) {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -347,7 +346,6 @@
     }
     function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 
-    // دوال قراءة وتحليل Excel (الأصلية)
     function readExcelFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -415,9 +413,6 @@
         return d;
     }
 
-    // -------------------------------------------------------------
-    // رفع المنتجات
-    // -------------------------------------------------------------
     let pendingProductFiles = [];
     document.getElementById('dbFileInput').addEventListener('change', (e) => {
         pendingProductFiles = Array.from(e.target.files);
@@ -439,7 +434,6 @@
                 const dataRows = rows.slice(1);
                 const totalRows = dataRows.length;
                 let fileAdded = 0;
-                
                 const BATCH_SIZE = 150;
                 for (let start = 0; start < dataRows.length; start += BATCH_SIZE) {
                     const batch = dataRows.slice(start, Math.min(start + BATCH_SIZE, dataRows.length));
@@ -489,9 +483,6 @@
     document.getElementById('processDbBtn').onclick = () => processProductFiles(false);
     document.getElementById('processDbNoFilterBtn').onclick = () => processProductFiles(true);
 
-    // -------------------------------------------------------------
-    // رفع المرجع (كما هو)
-    // -------------------------------------------------------------
     let pendingStockFiles = [];
     document.getElementById('stockFileInput').addEventListener('change', (e) => { pendingStockFiles = Array.from(e.target.files); });
     async function processStockFiles() {
@@ -533,9 +524,6 @@
     }
     document.getElementById('processStockBtn').onclick = processStockFiles;
 
-    // -------------------------------------------------------------
-    // البحث والتعرف مع قفل لمنع التكرار (حل مشكلة الكاميرا)
-    // -------------------------------------------------------------
     async function lookupWithEffects(val, fromCamera = false) {
         if (!val) return false;
         if (fromCamera && isProcessingScan) return false;
@@ -616,9 +604,6 @@
     };
     document.getElementById('resetInventoryBtn').onclick = () => { if (confirm("مسح كل الجرد؟")) { const tx = db.transaction("inventory", "readwrite"); tx.objectStore("inventory").clear(); tx.oncomplete = () => { updateAllUI(); showToast("تم مسح الجرد"); }; } };
 
-    // -------------------------------------------------------------
-    // البحث وعرض الجداول
-    // -------------------------------------------------------------
     let filterInv = "", filterCmp = "";
     document.getElementById('searchInventory').addEventListener('input', (e) => { filterInv = e.target.value.toLowerCase(); renderInventoryTable(); });
     document.getElementById('searchCompare').addEventListener('input', (e) => { filterCmp = e.target.value.toLowerCase(); renderComparison(); });
@@ -659,7 +644,7 @@
         document.getElementById('comparisonTableDiv').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الفعلي</th><th>المجرد</th><th>الفرق</th> </thead><tbody>${filtered.map(r => {
             let cls = r.diff>0 ? 'diff-positive' : (r.diff<0 ? 'diff-negative' : 'diff-zero');
             let icon = r.diff>0 ? '⬆️' : (r.diff<0 ? '⬇️' : '✅');
-            return `<tr><td style="font-family:monospace;">${escapeHtml(r.itemNo)}</td><td>${escapeHtml(r.name)}</td><td>${r.qs}</td><td>${r.qi}</td><td class="${cls}">${icon} ${r.diff>0?'+':''}${r.diff}</td></tr>`;
+            return `<tr><td style="font-family:monospace;">${escapeHtml(r.itemNo)}</td><td>${escapeHtml(r.name)}</td><td>${r.qs}</td><td>${r.qi}<td><td class="${cls}">${icon} ${r.diff>0?'+':''}${r.diff}</td></tr>`;
         }).join('')}</tbody>点心`;
     }
 
@@ -699,9 +684,9 @@
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { await deleteInventoryItem(btn.getAttribute('data-key')); }));
         
         renderInventoryTable();
-        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
+        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td style="font-family:monospace;">${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
         renderComparison();
-        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></td>`).join('')}</tbody>点心`;
+        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.name||'-')}</td><td>${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody>点心`;
     }
     
     async function updateInventoryQuantity(key, delta) {
@@ -751,9 +736,7 @@
     document.getElementById('exportProductsBtn').onclick = () => { const tx = db.transaction("products", "readonly"); tx.objectStore("products").getAll().onsuccess = e => { let data = e.target.result.map(p => ({ "رقم الصنف": p.item_no||'', "الاسم": p.name||'', "الباركود": p.barcode||'' })); exportToExcel(data, "المنتجات", "منتجات_"+Date.now()); }; };
     document.getElementById('exportCompareBtn').onclick = () => { const tx = db.transaction(["inventory","stock"], "readonly"); Promise.all([new Promise(r=>tx.objectStore("inventory").getAll().onsuccess=e=>r(e.target.result)), new Promise(r=>tx.objectStore("stock").getAll().onsuccess=e=>r(e.target.result))]).then(([inv,stock])=>{ let allKeys=new Set([...inv.map(i=>i.key),...stock.map(s=>s.key)]); let data=[...allKeys].map(k=>{ let i=inv.find(x=>x.key===k); let s=stock.find(x=>x.key===k); return { "رقم الصنف":k, "الاسم":(i||s)?.name||'', "الفعلي":s?s.qty:0, "المجرد":i?i.qty:0, "الفرق":(i?i.qty:0)-(s?s.qty:0) }; }); exportToExcel(data, "المقارنة", "مقارنة_"+Date.now()); }); };
 
-    // -------------------------------------------------------------
-    // الكاميرا مع قفل وإغلاق فوري بعد أول مسح (يمنع التكرار)
-    // -------------------------------------------------------------
+    // الكاميرا مع اختيار تلقائي للكاميرا رقم 3 (إن وجدت)
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -763,13 +746,20 @@
             devices.forEach((device, idx) => {
                 const option = document.createElement('option');
                 option.value = device.id;
-                option.textContent = device.label || `كاميرا ${idx + 1}`;
+                let label = device.label || `كاميرا ${idx + 1}`;
+                option.textContent = label;
                 select.appendChild(option);
             });
             if (devices.length > 0) {
-                const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('خلفية')) || devices[0];
-                currentCameraId = backCam.id;
+                let selectedCam = null;
+                if (devices.length >= 3) {
+                    selectedCam = devices[2]; // الثالثة (index 2)
+                } else {
+                    selectedCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('خلفية')) || devices[0];
+                }
+                currentCameraId = selectedCam.id;
                 select.value = currentCameraId;
+                showToast(`تم اختيار الكاميرا: ${selectedCam.label || 'افتراضية'}`, false, 1500);
             }
         } catch (err) { console.warn(err); showToast("تعذر الوصول للكاميرات", true); }
     }
@@ -787,8 +777,7 @@
             await html5QrScanner.start({ deviceId: { exact: targetId } }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 async (decoded) => {
                     if (isProcessingScan) return;
-                    // إغلاق الكاميرا فوراً بعد أول مسح ناجح
-                    await closeCamera();
+                    await closeCamera(); // إغلاق سريع بعد أول مسح
                     barcodeInput.value = decoded;
                     await lookupWithEffects(decoded, true);
                 },
@@ -821,9 +810,7 @@
     document.getElementById('switchCamBtn').onclick = switchCamera;
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
-    // -------------------------------------------------------------
     // إعادة التعيين (تعمل على GitHub Pages)
-    // -------------------------------------------------------------
     window.resetAll = function() {
         if (confirm("⚠️ سيتم حذف جميع البيانات (المنتجات، الجرد، المرجع) بشكل نهائي. لا يمكن التراجع. متابعة؟")) {
             showToast("جاري حذف البيانات...", false, 1500);
@@ -841,9 +828,7 @@
     };
     document.getElementById('globalResetBtn').onclick = () => resetAll();
 
-    // -------------------------------------------------------------
     // التهيئة النهائية
-    // -------------------------------------------------------------
     function initDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = (e) => {
