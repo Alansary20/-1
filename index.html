@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | إصدار سريع بدون تجميد</title>
+    <title>نظام الجرد الذكي | إصدار نهائي بدون تجميد</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -192,10 +192,10 @@
     <!-- تبويب المسح -->
     <div id="tab-scan" class="panel active-pane">
         <div class="card" id="scanCard">
-            <input type="text" id="barcodeInput" class="input-field" placeholder="✍️ امسح أو اكتب باركود / رقم صنف" autocomplete="off">
+            <input type="text" id="barcodeInput" class="input-field" placeholder="✍️ اكتب باركود أو رقم صنف ثم اضغط Enter" autocomplete="off">
             <div class="camera-selector">
                 <select id="cameraSelect" class="cam-select"><option value="">تحميل الكاميرات...</option></select>
-                <button id="startCamBtn" class="btn-primary" style="width: auto; padding: 10px 16px;"><i class="fas fa-camera-retro"></i> فتح</button>
+                <button id="startCamBtn" class="btn-primary" style="width: auto; padding: 10px 16px;"><i class="fas fa-camera-retro"></i> فتح الكاميرا</button>
                 <button id="switchCamBtn" class="btn-secondary" style="width: auto; padding: 10px 16px;"><i class="fas fa-sync-alt"></i> تبديل</button>
             </div>
             <div id="cameraDiv" class="camera-wrapper hidden"><div id="reader2"></div><button id="closeCamBtn" class="btn-secondary" style="margin-top:8px;">إغلاق</button></div>
@@ -285,11 +285,14 @@
 
 <script>
     // -------------------------------------------------------------
-    // نظام الجرد الذكي - إصدار مقاوم للتجميد
+    // نظام الجرد الذكي - إصدار نهائي بدون تجميد
+    // تم الإصلاح:
+    // 1- إزالة المسح التلقائي أثناء الكتابة اليدوية (يتم فقط بالزر أو Enter)
+    // 2- منع تجميد الكاميرا: إغلاق فوري بعد أول مسح + قفل صارم
     // -------------------------------------------------------------
     let db;
     const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 28;
+    const DB_VERSION = 29;
     let inventory = [];
     let html5QrScanner = null, scanningActive = false;
     let availableCameras = [];
@@ -349,7 +352,7 @@
     function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
     function generateUniqueId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now(); }
 
-    // دوال رفع الملفات (محفوظة من الإصدارات السابقة وتعمل بشكل جيد)
+    // دوال رفع الملفات (محفوظة وتعمل بكفاءة)
     function readExcelFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -496,7 +499,7 @@
     }
     document.getElementById('processStockBtn').onclick = processStockFiles;
 
-    // ------------------- المعالجة الأساسية للمسح (بدون تجميد) -------------------
+    // ------------------- المعالجة الأساسية (مقاومة للتكرار والتجميد) -------------------
     async function addToInventory(itemCode, productName, barcode = '') {
         return new Promise((resolve) => {
             const tx = db.transaction("inventory", "readwrite");
@@ -561,16 +564,18 @@
         }
     }
 
-    // ربط المسح اليدوي والكاميرا
-    barcodeInput.addEventListener('input', async (e) => {
-        let val = e.target.value.trim();
-        if (val) {
-            let cleanVal = val.replace(/\.0+$/, '').trim();
-            await lookupAndAdd(cleanVal, false);
-            barcodeInput.value = '';
+    // ----- اليدوي: فقط عند الضغط على زر "جرد" أو الضغط على Enter (لا مسح تلقائي أثناء الكتابة) -----
+    barcodeInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            let val = barcodeInput.value.trim();
+            if (val) {
+                let cleanVal = val.replace(/\.0+$/, '').trim();
+                await lookupAndAdd(cleanVal, false);
+                barcodeInput.value = '';
+            }
         }
     });
-
     document.getElementById('addOneBtn').onclick = async () => {
         let raw = barcodeInput.value.trim();
         if (!raw) { showToast("ادخل باركود أو رقم صنف", true); return; }
@@ -653,7 +658,7 @@
             return `<tr><td style="font-family:monospace;">${escapeHtml(r.itemNo)}</td><td>${escapeHtml(r.name)}</td><td>${r.qs}</td><td>${r.qi}</td><td class="${cls}">${icon} ${r.diff>0?'+':''}${r.diff}</td></tr>`;
         }).join('')}</tbody>点心`;
         // جدول المنتجات
-        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td><tr>`).join('')}</tbody>点心`;
+        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody>点心`;
     }
     async function updateQuantity(key, delta) {
         const tx = db.transaction("inventory", "readwrite");
@@ -709,7 +714,7 @@
     document.getElementById('exportProductsBtn').onclick = () => { const tx = db.transaction("products", "readonly"); tx.objectStore("products").getAll().onsuccess = e => { let data = e.target.result.map(p => ({ "رقم الصنف": p.item_no||'', "الاسم": p.name||'', "الباركود": p.barcode||'' })); exportToExcel(data, "المنتجات", "منتجات_"+Date.now()); }; };
     document.getElementById('exportCompareBtn').onclick = () => { const tx = db.transaction(["inventory","stock"], "readonly"); Promise.all([new Promise(r=>tx.objectStore("inventory").getAll().onsuccess=e=>r(e.target.result)), new Promise(r=>tx.objectStore("stock").getAll().onsuccess=e=>r(e.target.result))]).then(([inv,stock])=>{ let allKeys=new Set([...inv.map(i=>i.key),...stock.map(s=>s.key)]); let data=[...allKeys].map(k=>{ let i=inv.find(x=>x.key===k); let s=stock.find(x=>x.key===k); return { "رقم الصنف":k, "الاسم":(i||s)?.name||'', "الفعلي":s?s.qty:0, "المجرد":i?i.qty:0, "الفرق":(i?i.qty:0)-(s?s.qty:0) }; }); exportToExcel(data, "المقارنة", "مقارنة_"+Date.now()); }); };
 
-    // ------------------- الكاميرا -------------------
+    // ------------------- الكاميرا (إغلاق فوري بعد أول مسح + قفل) -------------------
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -741,12 +746,12 @@
             html5QrScanner = new Html5Qrcode("reader2");
             await html5QrScanner.start({ deviceId: { exact: targetId } }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 async (decoded) => {
-                    if (processingLock) return;          // منع التكرار
-                    await closeCamera();                 // إغلاق الكاميرا فوراً
+                    if (processingLock) return;      // منع التكرار
+                    await closeCamera();              // إغلاق فوري بعد أول مسح
                     let cleanVal = decoded.replace(/\.0+$/, '').trim();
                     barcodeInput.value = cleanVal;
                     await lookupAndAdd(cleanVal, true);
-                    barcodeInput.value = '';            // تنظيف الحقل
+                    barcodeInput.value = '';          // تنظيف الحقل
                 },
                 (err) => {});
             scanningActive = true;
@@ -821,7 +826,6 @@
         document.getElementById(target).classList.add('active-pane');
         updateAllUI();
     }));
-    initDB();
     function initDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = (e) => {
@@ -834,6 +838,7 @@
         req.onsuccess = (e) => { db = e.target.result; updateAllUI(); listCameras(); };
         req.onerror = (e) => console.error(e);
     }
+    initDB();
 </script>
 </body>
 </html>
