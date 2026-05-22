@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>نظام الجرد الذكي | ماسح محسّن</title>
+    <title>نظام الجرد الذكي | كاميرا محسّنة</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -37,12 +37,7 @@
             text-align: center;
         }
         .header h1 { font-size: 1.7rem; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 800; }
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .stat-card { background: white; border-radius: 28px; padding: 14px 6px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.04); }
         .stat-number { font-size: 1.9rem; font-weight: 800; color: #0f2b3d; }
         .stat-label { font-size: 0.7rem; color: #5b6e8c; font-weight: 600; }
@@ -81,9 +76,7 @@
         .diff-positive { background: #e0f2e9; color: #15803d; }
         .diff-negative { background: #fee2e2; color: #b91c1c; }
         .diff-zero { background: #e0e7ff; color: #1e40af; }
-        .search-input {
-            width: 100%; padding: 10px 16px; border-radius: 60px; border: 1px solid #cbd5e1; margin-bottom: 14px; background: white;
-        }
+        .search-input { width: 100%; padding: 10px 16px; border-radius: 60px; border: 1px solid #cbd5e1; margin-bottom: 14px; background: white; }
         .file-label { background: #f1f5f9; border-radius: 60px; padding: 12px; text-align: center; cursor: pointer; border: 1px dashed #2c5a7a; margin-bottom: 14px; }
         .camera-wrapper {
             border-radius: 32px; overflow: hidden; margin-top: 12px; background: #000; position: relative; max-width: 400px; margin-left: auto; margin-right: auto;
@@ -101,8 +94,6 @@
             height: 100px !important;
         }
         .hidden { display: none; }
-        .progress-fixed { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #e2e8f0; border-radius: 60px; overflow: hidden; height: 30px; z-index: 2000; display: none; }
-        .progress-fill { width: 0%; height: 100%; background: #0f2b3d; text-align: center; line-height: 30px; color: white; font-size: 11px; }
         .toast { position: fixed; bottom: 80px; left: 20px; right: 20px; background: #1e293b; color: white; text-align: center; padding: 12px; border-radius: 60px; font-size: 0.85rem; z-index: 2100; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
         .flash-green { background: #bbf7d0 !important; box-shadow: 0 0 0 3px #22c55e; transition: 0.08s; }
         .flash-red { background: #fee2e2 !important; box-shadow: 0 0 0 3px #ef4444; transition: 0.08s; }
@@ -135,7 +126,7 @@
         <button class="tab-btn" data-tab="tab-cmp"><i class="fas fa-chart-line"></i> المقارنة</button>
         <button class="tab-btn" data-tab="tab-products"><i class="fas fa-archive"></i> المنتجات</button>
     </div>
-    <div id="globalProgress" class="progress-fixed"><div class="progress-fill" id="progressFill">0%</div></div>
+
     <!-- تبويب المسح -->
     <div id="tab-scan" class="panel active-pane">
         <div class="card" id="scanCard">
@@ -154,12 +145,68 @@
             <div id="inventoryListContainer" class="inventory-list"></div>
         </div>
     </div>
-    <!-- باقي التبويبات كما هي بدون تغيير -->
-    <div id="tab-inv" class="panel"><div class="card"><input type="text" id="searchInventory" class="search-input" placeholder="🔍 بحث في سجل الجرد"><button id="exportInventoryBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير Excel</button><div id="inventoryFullTable" class="data-wrapper"></div></div></div>
-    <div id="tab-stock" class="panel"><div class="card"><div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-file-excel"></i> رفع ملف الرصيد الفعلي (مرجع)</div><div class="file-label" id="stockUploadArea"><i class="fas fa-upload"></i> اختر ملف Excel <input type="file" id="stockFileInput" style="display:none;" accept=".xlsx,.xlsm,.xlsb"></div><div style="display:flex; gap:8px; margin-bottom:12px;"><select id="stockModeSelect" style="flex:1; padding:10px; border-radius:40px; background:white; border:1px solid #cbd5e1;"><option value="replace">استبدال</option><option value="merge">دمج</option></select><button id="processStockBtn" class="btn-primary" style="width:auto; padding:10px 18px;"><i class="fas fa-play"></i> معالجة</button></div><button id="exportStockBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المرجع</button><div id="stockTableContainer" class="data-wrapper"></div></div></div>
-    <div id="tab-cmp" class="panel"><div class="card"><input type="text" id="searchCompare" class="search-input" placeholder="🔍 بحث في المقارنة"><div class="compare-stats-grid"><div class="compare-stat-card"><div class="compare-stat-number" id="statsActualItems">0</div><div class="compare-stat-label">📦 الفعلي</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsIncreaseCount">0</div><div class="compare-stat-label">⬆️ زيادة</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsDecreaseCount">0</div><div class="compare-stat-label">⬇️ نقص</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsMatchCount">0</div><div class="compare-stat-label">✅ مطابق</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsScannedCount">0</div><div class="compare-stat-label">🔄 المجرود</div></div><div class="compare-stat-card"><div class="compare-stat-number" id="statsTotalDiff">0</div><div class="compare-stat-label">⚖️ الفرق</div></div></div><div class="filter-btns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"><button class="filter-btn active" data-filter="all">الكل</button><button class="filter-btn" data-filter="increase">⬆️ زيادة</button><button class="filter-btn" data-filter="decrease">⬇️ نقص</button><button class="filter-btn" data-filter="match">✅ مطابق</button></div><button id="exportCompareBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المقارنة</button><div id="comparisonTableDiv" class="data-wrapper"></div></div></div>
-    <div id="tab-products" class="panel"><div class="card"><div class="file-label" id="dbUploadArea"><i class="fas fa-upload"></i> رفع ملف المنتجات <input type="file" id="dbFileInput" style="display:none;" multiple></div><div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;"><button id="processDbBtn" class="btn-primary">معالجة عادي</button><button id="processDbNoFilterBtn" class="btn-secondary">بدون فلتر</button></div><button id="exportProductsBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المنتجات</button><div id="productsTableContainer" class="data-wrapper"></div><button id="clearProductsBtn" class="btn-secondary" style="margin-top:12px;">مسح كل المنتجات</button></div></div>
+
+    <!-- تبويب الجرد الكامل -->
+    <div id="tab-inv" class="panel">
+        <div class="card">
+            <input type="text" id="searchInventory" class="search-input" placeholder="🔍 بحث في سجل الجرد">
+            <button id="exportInventoryBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير Excel</button>
+            <div id="inventoryFullTable" class="data-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- تبويب المرجع -->
+    <div id="tab-stock" class="panel">
+        <div class="card">
+            <div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-file-excel"></i> رفع ملف الرصيد الفعلي (مرجع)</div>
+            <div class="file-label" id="stockUploadArea"><i class="fas fa-upload"></i> اختر ملف Excel <input type="file" id="stockFileInput" style="display:none;" accept=".xlsx,.xlsm,.xlsb"></div>
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <select id="stockModeSelect" style="flex:1; padding:10px; border-radius:40px; background:white; border:1px solid #cbd5e1;"><option value="replace">استبدال</option><option value="merge">دمج</option></select>
+                <button id="processStockBtn" class="btn-primary" style="width:auto; padding:10px 18px;"><i class="fas fa-play"></i> معالجة</button>
+            </div>
+            <button id="exportStockBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المرجع</button>
+            <div id="stockTableContainer" class="data-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- تبويب المقارنة -->
+    <div id="tab-cmp" class="panel">
+        <div class="card">
+            <input type="text" id="searchCompare" class="search-input" placeholder="🔍 بحث في المقارنة">
+            <div class="compare-stats-grid">
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsActualItems">0</div><div class="compare-stat-label">📦 الفعلي</div></div>
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsIncreaseCount">0</div><div class="compare-stat-label">⬆️ زيادة</div></div>
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsDecreaseCount">0</div><div class="compare-stat-label">⬇️ نقص</div></div>
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsMatchCount">0</div><div class="compare-stat-label">✅ مطابق</div></div>
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsScannedCount">0</div><div class="compare-stat-label">🔄 المجرود</div></div>
+                <div class="compare-stat-card"><div class="compare-stat-number" id="statsTotalDiff">0</div><div class="compare-stat-label">⚖️ الفرق</div></div>
+            </div>
+            <div class="filter-btns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <button class="filter-btn active" data-filter="all">الكل</button>
+                <button class="filter-btn" data-filter="increase">⬆️ زيادة</button>
+                <button class="filter-btn" data-filter="decrease">⬇️ نقص</button>
+                <button class="filter-btn" data-filter="match">✅ مطابق</button>
+            </div>
+            <button id="exportCompareBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المقارنة</button>
+            <div id="comparisonTableDiv" class="data-wrapper"></div>
+        </div>
+    </div>
+
+    <!-- تبويب المنتجات -->
+    <div id="tab-products" class="panel">
+        <div class="card">
+            <div class="file-label" id="dbUploadArea"><i class="fas fa-upload"></i> رفع ملف المنتجات <input type="file" id="dbFileInput" style="display:none;" multiple></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                <button id="processDbBtn" class="btn-primary">معالجة عادي</button>
+                <button id="processDbNoFilterBtn" class="btn-secondary">بدون فلتر</button>
+            </div>
+            <button id="exportProductsBtn" class="btn-secondary"><i class="fas fa-file-excel"></i> تصدير المنتجات</button>
+            <div id="productsTableContainer" class="data-wrapper"></div>
+            <button id="clearProductsBtn" class="btn-secondary" style="margin-top:12px;">مسح كل المنتجات</button>
+        </div>
+    </div>
 </div>
+
 <div id="productModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:3000;">
     <div style="background:white; border-radius:44px; padding:24px; width:90%; max-width:380px;">
         <h3>➕ إضافة منتج</h3>
@@ -167,43 +214,299 @@
         <div style="display:flex; gap:12px; margin-top:12px;"><button id="saveProductBtn" style="background:#0f2b3d; color:white; border:none; padding:12px; border-radius:40px; flex:1;">حفظ</button><button id="closeModalBtn" style="background:#eef2f6; border:none; padding:12px; border-radius:40px; flex:1;">إلغاء</button></div>
     </div>
 </div>
+
 <script>
-    // قاعدة البيانات والوظائف المساعدة (بدون تغيير)
+    // ========== قاعدة البيانات ==========
     let db;
-    const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 30;
+    const DB_NAME = "InvSmartDB4";
+    const DB_VERSION = 1;
     let inventory = [];
-    let html5QrScanner = null, scanningActive = false;
+    let html5QrScanner = null;
+    let scanningActive = false;
     let availableCameras = [];
     let currentCameraId = null;
     let lastScanTime = 0;
-    const barcodeInput = document.getElementById('barcodeInput');
-    function playBeep(success) { try { const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime; if(success){ osc.frequency.setValueAtTime(880, now); gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.35); osc.start(now); osc.stop(now+0.35); } else { osc.frequency.setValueAtTime(220, now); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.5); osc.start(now); osc.stop(now+0.5); } } catch(e) {} }
-    function flashCard(color) { const card = document.getElementById('scanCard'); if(card){ card.classList.add(color==='green'?'flash-green':'flash-red'); setTimeout(()=>card.classList.remove('flash-green','flash-red'), 400); } }
-    function showToast(msg, isErr=false, duration=3000) { let t = document.querySelector('.toast'); if(t) t.remove(); const toast = document.createElement('div'); toast.className='toast'; toast.style.backgroundColor=isErr?'#b91c1c':'#0f2b3d'; toast.innerHTML=`<i class="fas ${isErr?'fa-exclamation-triangle':'fa-check-circle'}"></i> ${msg}`; document.body.appendChild(toast); setTimeout(()=>toast.remove(), duration); }
-    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
-    function generateUniqueId() { return Date.now()+'-'+Math.random().toString(36).substr(2,9)+'-'+performance.now(); }
-    function readExcelFile(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = (e) => { try { const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, { type: 'array' }); const sheet = wb.Sheets[wb.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false }); resolve(rows); } catch(err) { reject(err); } }; reader.onerror = () => reject(new Error("فشل القراءة")); reader.readAsArrayBuffer(file); }); }
-    function getCommonBlacklist(rows) { const counts = new Map(); for(let i=0; i<Math.min(rows.length,100); i++) { const row = rows[i]; if(!Array.isArray(row)) continue; for(let cell of row) { let v = String(cell||'').trim(); if(v) counts.set(v, (counts.get(v)||0)+1); } } const black = []; for(let [txt, c] of counts.entries()) if(c>15) black.push(txt); return black; }
-    function parseProductRow(row, blacklist) { let res = { barcode: "", item_no: "", name: "" }; if(!Array.isArray(row)) return res; let candidates = { long: [], dash: [], text: [] }; for(let cell of row) { let v = String(cell||'').trim(); if(!v||blacklist.includes(v)) continue; if(/^\d+\.0+$/.test(v)) v = v.replace(/\.0+$/, ''); let digits = v.replace(/[^\d]/g, ''); if(digits.length>=8 && digits.length<=20) candidates.long.push(v); if(v.includes('-') && v.length>8) candidates.dash.push(v); if(/[a-zA-Z\u0600-\u06FF]/.test(v) && v.length>2 && !/^\d+$/.test(v)) candidates.text.push(v); } if(candidates.dash.length) res.item_no = candidates.dash[0]; else if(candidates.long.length) res.item_no = candidates.long[0]; if(candidates.long.length) { for(let n of candidates.long) if(n!==res.item_no) { res.barcode = n; break; } if(!res.barcode && candidates.long.length) res.barcode = candidates.long[0]; } if(candidates.text.length) res.name = candidates.text[0]; return res; }
-    function parseStockRow(row, blacklist, qtyCol) { let d = { item_no: "", name: "", qty: 0 }; if(qtyCol!==undefined && row[qtyCol]!==undefined) { let q = parseFloat(String(row[qtyCol]).replace(/[^\d.-]/g, '')); d.qty = isNaN(q)?0:q; } for(let cell of row) { let v = String(cell||'').trim(); if(!v||blacklist.includes(v)) continue; if(/^\d+\.0+$/.test(v)) v = v.replace(/\.0+$/, ''); if(!d.item_no) { let digits = v.replace(/-/g, ''); if(v.includes('-') && /^\d+$/.test(digits) && digits.length>10) d.item_no = v; else if(/^\d+$/.test(v) && v.length>6) d.item_no = v; } if(!d.name && /[a-zA-Z\u0600-\u06FF]/.test(v) && v.length>2) d.name = v; } return d; }
-    // ... (بقية كود رفع الملفات والإضافة اليدوية دون تعديل) ...
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playBeep(success) {
+        if (!audioCtx) initAudio();
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if (success) {
+                osc.frequency.setValueAtTime(880, now);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+                osc.start(now); osc.stop(now + 0.35);
+            } else {
+                osc.frequency.setValueAtTime(220, now);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        } catch(e) {}
+    }
+
+    function flashCard(color) {
+        const card = document.getElementById('scanCard');
+        if (card) {
+            card.classList.add(color === 'green' ? 'flash-green' : 'flash-red');
+            setTimeout(() => card.classList.remove('flash-green', 'flash-red'), 400);
+        }
+    }
+
+    function showToast(msg, isErr = false, duration = 3000) {
+        let t = document.querySelector('.toast'); if (t) t.remove();
+        const toast = document.createElement('div'); toast.className = 'toast';
+        toast.style.backgroundColor = isErr ? '#b91c1c' : '#0f2b3d';
+        toast.innerHTML = `<i class="fas ${isErr ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), duration);
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+    function generateUniqueId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now(); }
+
+    // ========== رفع الملفات ==========
+    function readExcelFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: false });
+                    resolve(rows);
+                } catch (err) { reject(err); }
+            };
+            reader.onerror = () => reject(new Error("فشل القراءة"));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function getCommonBlacklist(rows) {
+        const counts = new Map();
+        for (let i = 0; i < Math.min(rows.length, 100); i++) {
+            const row = rows[i]; if (!Array.isArray(row)) continue;
+            for (let cell of row) { let v = String(cell || '').trim(); if (v) counts.set(v, (counts.get(v) || 0) + 1); }
+        }
+        const black = []; for (let [txt, c] of counts.entries()) if (c > 15) black.push(txt);
+        return black;
+    }
+
+    function parseProductRow(row, blacklist) {
+        let res = { barcode: "", item_no: "", name: "" };
+        if (!Array.isArray(row)) return res;
+        let candidates = { long: [], dash: [], text: [] };
+        for (let cell of row) {
+            let v = String(cell || '').trim();
+            if (!v || blacklist.includes(v)) continue;
+            if (/^\d+\.0+$/.test(v)) v = v.replace(/\.0+$/, '');
+            let digits = v.replace(/[^\d]/g, '');
+            if (digits.length >= 8 && digits.length <= 20) candidates.long.push(v);
+            if (v.includes('-') && v.length > 8) candidates.dash.push(v);
+            if (/[a-zA-Z\u0600-\u06FF]/.test(v) && v.length > 2 && !/^\d+$/.test(v)) candidates.text.push(v);
+        }
+        if (candidates.dash.length) res.item_no = candidates.dash[0];
+        else if (candidates.long.length) res.item_no = candidates.long[0];
+        if (candidates.long.length) {
+            for (let n of candidates.long) if (n !== res.item_no) { res.barcode = n; break; }
+            if (!res.barcode && candidates.long.length) res.barcode = candidates.long[0];
+        }
+        if (candidates.text.length) res.name = candidates.text[0];
+        return res;
+    }
+
+    function parseStockRow(row, blacklist, qtyCol) {
+        let d = { item_no: "", name: "", qty: 0 };
+        if (qtyCol !== undefined && row[qtyCol] !== undefined) {
+            let q = parseFloat(String(row[qtyCol]).replace(/[^\d.-]/g, ''));
+            d.qty = isNaN(q) ? 0 : q;
+        }
+        for (let cell of row) {
+            let v = String(cell || '').trim();
+            if (!v || blacklist.includes(v)) continue;
+            if (/^\d+\.0+$/.test(v)) v = v.replace(/\.0+$/, '');
+            if (!d.item_no) {
+                let digits = v.replace(/-/g, '');
+                if (v.includes('-') && /^\d+$/.test(digits) && digits.length > 10) d.item_no = v;
+                else if (/^\d+$/.test(v) && v.length > 6) d.item_no = v;
+            }
+            if (!d.name && /[a-zA-Z\u0600-\u06FF]/.test(v) && v.length > 2) d.name = v;
+        }
+        return d;
+    }
+
     let pendingProductFiles = [];
     document.getElementById('dbFileInput').addEventListener('change', (e) => { pendingProductFiles = Array.from(e.target.files); });
-    async function processProductFiles(skipBlacklist = false) { if(!pendingProductFiles.length){ showToast("اختر ملفات أولاً", true); return; } const sourceId = Date.now(); let totalAdded = 0; for(const file of pendingProductFiles) { try { const rows = await readExcelFile(file); if(!rows||rows.length<2) throw new Error("لا توجد بيانات كافية"); const blacklist = skipBlacklist?[]:getCommonBlacklist(rows); const dataRows = rows.slice(1); const BATCH_SIZE = 150; for(let start=0; start<dataRows.length; start+=BATCH_SIZE) { const batch = dataRows.slice(start, Math.min(start+BATCH_SIZE, dataRows.length)); const tx = db.transaction(["products"], "readwrite"); const store = tx.objectStore("products"); for(const row of batch) { let d = parseProductRow(row, blacklist); if(d.item_no||d.barcode){ store.add({ id: generateUniqueId(), barcode: d.barcode||"", item_no: d.item_no||"", name: d.name||"بدون اسم", sourceId }); totalAdded++; } } await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); await new Promise(r=>setTimeout(r,10)); } } catch(err) { showToast(`خطأ في ${file.name}: ${err.message}`, true); return; } } const ftx = db.transaction("uploadedFiles", "readwrite"); ftx.objectStore("uploadedFiles").add({ names: pendingProductFiles.map(f=>f.name).join(', '), count: totalAdded, sourceId }); await new Promise(r=>{ ftx.oncomplete = r; }); showToast(`✅ تم رفع ${totalAdded} منتج`); pendingProductFiles = []; updateAllUI(); }
+    async function processProductFiles(skipBlacklist = false) {
+        if (!pendingProductFiles.length) { showToast("اختر ملفات أولاً", true); return; }
+        const sourceId = Date.now();
+        let totalAdded = 0;
+        for (const file of pendingProductFiles) {
+            try {
+                const rows = await readExcelFile(file);
+                if (!rows || rows.length < 2) throw new Error("لا توجد بيانات كافية");
+                const blacklist = skipBlacklist ? [] : getCommonBlacklist(rows);
+                const dataRows = rows.slice(1);
+                const BATCH_SIZE = 150;
+                for (let start = 0; start < dataRows.length; start += BATCH_SIZE) {
+                    const batch = dataRows.slice(start, Math.min(start + BATCH_SIZE, dataRows.length));
+                    const tx = db.transaction(["products"], "readwrite");
+                    const store = tx.objectStore("products");
+                    for (const row of batch) {
+                        let d = parseProductRow(row, blacklist);
+                        if (d.item_no || d.barcode) {
+                            store.add({ id: generateUniqueId(), barcode: d.barcode || "", item_no: d.item_no || "", name: d.name || "بدون اسم", sourceId });
+                            totalAdded++;
+                        }
+                    }
+                    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+                    await new Promise(r => setTimeout(r, 10));
+                }
+            } catch (err) { showToast(`خطأ في ${file.name}: ${err.message}`, true); return; }
+        }
+        const ftx = db.transaction("uploadedFiles", "readwrite");
+        ftx.objectStore("uploadedFiles").add({ names: pendingProductFiles.map(f => f.name).join(', '), count: totalAdded, sourceId });
+        await new Promise(r => { ftx.oncomplete = r; });
+        showToast(`✅ تم رفع ${totalAdded} منتج`);
+        pendingProductFiles = [];
+        updateAllUI();
+    }
     document.getElementById('processDbBtn').onclick = () => processProductFiles(false);
     document.getElementById('processDbNoFilterBtn').onclick = () => processProductFiles(true);
+
     let pendingStockFiles = [];
     document.getElementById('stockFileInput').addEventListener('change', (e) => { pendingStockFiles = Array.from(e.target.files); });
-    async function processStockFiles() { if(!pendingStockFiles.length){ showToast("اختر ملف المرجع أولاً", true); return; } const mode = document.getElementById('stockModeSelect').value; if(mode==='replace') { const clearTx = db.transaction("stock", "readwrite"); clearTx.objectStore("stock").clear(); await new Promise(r=>{ clearTx.oncomplete = r; }); } for(const file of pendingStockFiles) { const rows = await readExcelFile(file); let qtyCol = undefined; if(rows[0]) for(let i=0; i<rows[0].length; i++) if(String(rows[0][i]).trim()==="الفعلي النهائي") qtyCol = i; const blacklist = getCommonBlacklist(rows); const dataRows = rows.slice(1); for(let start=0; start<dataRows.length; start+=200) { const batch = dataRows.slice(start, start+200); const tx = db.transaction("stock", "readwrite"); const store = tx.objectStore("stock"); for(const row of batch) { let d = parseStockRow(row, blacklist, qtyCol); if(!d.item_no) continue; if(mode==='merge') { const existing = await new Promise(r=>store.get(d.item_no).onsuccess=e=>r(e.target.result)); store.put({ key: d.item_no, name: d.name||existing?.name||'', qty: (existing?existing.qty:0)+d.qty }); } else { store.put({ key: d.item_no, name: d.name, qty: d.qty }); } } await new Promise(r=>{ tx.oncomplete = r; }); await new Promise(r=>setTimeout(r,10)); } } showToast("تم تحديث المرجع"); pendingStockFiles = []; updateAllUI(); }
+    async function processStockFiles() {
+        if (!pendingStockFiles.length) { showToast("اختر ملف المرجع أولاً", true); return; }
+        const mode = document.getElementById('stockModeSelect').value;
+        if (mode === 'replace') {
+            const clearTx = db.transaction("stock", "readwrite");
+            clearTx.objectStore("stock").clear();
+            await new Promise(r => { clearTx.oncomplete = r; });
+        }
+        for (const file of pendingStockFiles) {
+            const rows = await readExcelFile(file);
+            let qtyCol = undefined;
+            if (rows[0]) for (let i = 0; i < rows[0].length; i++) if (String(rows[0][i]).trim() === "الفعلي النهائي") qtyCol = i;
+            const blacklist = getCommonBlacklist(rows);
+            const dataRows = rows.slice(1);
+            for (let start = 0; start < dataRows.length; start += 200) {
+                const batch = dataRows.slice(start, start + 200);
+                const tx = db.transaction("stock", "readwrite");
+                const store = tx.objectStore("stock");
+                for (const row of batch) {
+                    let d = parseStockRow(row, blacklist, qtyCol);
+                    if (!d.item_no) continue;
+                    if (mode === 'merge') {
+                        const existing = await new Promise(r => store.get(d.item_no).onsuccess = e => r(e.target.result));
+                        store.put({ key: d.item_no, name: d.name || existing?.name || '', qty: (existing ? existing.qty : 0) + d.qty });
+                    } else {
+                        store.put({ key: d.item_no, name: d.name, qty: d.qty });
+                    }
+                }
+                await new Promise(r => { tx.oncomplete = r; });
+                await new Promise(r => setTimeout(r, 10));
+            }
+        }
+        showToast("تم تحديث المرجع");
+        pendingStockFiles = [];
+        updateAllUI();
+    }
     document.getElementById('processStockBtn').onclick = processStockFiles;
-    async function addToInventory(itemCode, productName, barcode = '') { return new Promise((resolve) => { const tx = db.transaction("inventory", "readwrite"); const store = tx.objectStore("inventory"); const key = itemCode; const getReq = store.get(key); getReq.onsuccess = () => { let existing = getReq.result; if(existing) { existing.qty++; store.put(existing); } else { store.put({ key, name: productName, qty: 1, barcode: barcode, item_no: itemCode }); } tx.oncomplete = () => resolve(true); tx.onerror = () => resolve(false); }; getReq.onerror = () => resolve(false); }); }
-    async function lookupAndAdd(cleanVal, fromCamera = false) { if(!cleanVal) return false; const now = Date.now(); if(fromCamera && (now - lastScanTime < 2000)) return false; lastScanTime = now; try { const tx = db.transaction(["products", "stock"], "readonly"); const products = await new Promise(r=>tx.objectStore("products").getAll().onsuccess=e=>r(e.target.result)); let match = products.find(p=>p.barcode===cleanVal||p.item_no===cleanVal); if(match) { await addToInventory(match.item_no||match.barcode, match.name, match.barcode); playBeep(true); flashCard('green'); showToast(`✓ تم جرد: ${match.name}`, false, 1200); updateAllUI(); return true; } const stockStore = tx.objectStore("stock"); const stockItem = await new Promise(r=>stockStore.get(cleanVal).onsuccess=e=>r(e.target.result)); if(stockItem) { const addTx = db.transaction(["products"], "readwrite"); addTx.objectStore("products").add({ id: generateUniqueId(), barcode: cleanVal, item_no: stockItem.key, name: stockItem.name, sourceId: "auto" }); await new Promise(r=>{ addTx.oncomplete = r; }); await addToInventory(stockItem.key, stockItem.name, cleanVal); playBeep(true); flashCard('green'); showToast(`✓ تم إضافة تلقائياً وجرد: ${stockItem.name}`, false, 1500); updateAllUI(); return true; } await addToInventory(cleanVal, "❓ غير معروف", cleanVal); playBeep(false); flashCard('red'); showToast(`⚠️ منتج غير مسجل - تم إضافة "غير معروف" +1`, true, 2000); updateAllUI(); return false; } catch(err) { console.error(err); return false; } }
-    barcodeInput.addEventListener('keypress', async (e) => { if(e.key==='Enter'){ e.preventDefault(); let val=barcodeInput.value.trim(); if(val){ await lookupAndAdd(val.replace(/\.0+$/,'').trim(), false); barcodeInput.value=''; } } });
-    document.getElementById('addOneBtn').onclick = async () => { let raw = barcodeInput.value.trim(); if(!raw){ showToast("ادخل باركود أو رقم صنف", true); return; } await lookupAndAdd(raw.replace(/\.0+$/,'').trim(), false); barcodeInput.value=''; };
-    document.getElementById('resetInventoryBtn').onclick = () => { if(confirm("مسح كل الجرد؟")){ const tx=db.transaction("inventory","readwrite"); tx.objectStore("inventory").clear(); tx.oncomplete=()=>{ updateAllUI(); showToast("تم مسح الجرد"); }; } };
 
-    // ========== بناء الكاميرا الجديد (ثابت ومضمون) ==========
+    // ========== إدارة المخزون ==========
+    async function addToInventory(itemCode, productName, barcode = '') {
+        return new Promise((resolve) => {
+            const tx = db.transaction("inventory", "readwrite");
+            const store = tx.objectStore("inventory");
+            const key = itemCode;
+            const getReq = store.get(key);
+            getReq.onsuccess = () => {
+                let existing = getReq.result;
+                if (existing) {
+                    existing.qty++;
+                    store.put(existing);
+                } else {
+                    store.put({ key, name: productName, qty: 1, barcode: barcode, item_no: itemCode });
+                }
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => resolve(false);
+            };
+            getReq.onerror = () => resolve(false);
+        });
+    }
+
+    async function lookupAndAdd(cleanVal, fromCamera = false) {
+        if (!cleanVal) return false;
+        const now = Date.now();
+        if (fromCamera && (now - lastScanTime < 2000)) return false;
+        lastScanTime = now;
+        try {
+            const tx = db.transaction(["products", "stock"], "readonly");
+            const products = await new Promise(r => tx.objectStore("products").getAll().onsuccess = e => r(e.target.result));
+            let match = products.find(p => p.barcode === cleanVal || p.item_no === cleanVal);
+            if (match) {
+                await addToInventory(match.item_no || match.barcode, match.name, match.barcode);
+                playBeep(true); flashCard('green');
+                showToast(`✓ تم جرد: ${match.name}`, false, 1200);
+                updateAllUI();
+                return true;
+            }
+            const stockStore = tx.objectStore("stock");
+            const stockItem = await new Promise(r => stockStore.get(cleanVal).onsuccess = e => r(e.target.result));
+            if (stockItem) {
+                const addTx = db.transaction(["products"], "readwrite");
+                addTx.objectStore("products").add({ id: generateUniqueId(), barcode: cleanVal, item_no: stockItem.key, name: stockItem.name, sourceId: "auto" });
+                await new Promise(r => { addTx.oncomplete = r; });
+                await addToInventory(stockItem.key, stockItem.name, cleanVal);
+                playBeep(true); flashCard('green');
+                showToast(`✓ تم إضافة تلقائياً وجرد: ${stockItem.name}`, false, 1500);
+                updateAllUI();
+                return true;
+            }
+            await addToInventory(cleanVal, "❓ غير معروف", cleanVal);
+            playBeep(false); flashCard('red');
+            showToast(`⚠️ منتج غير مسجل - تم إضافة "غير معروف" +1`, true, 2000);
+            updateAllUI();
+            return false;
+        } catch (err) { console.error(err); return false; }
+    }
+
+    document.getElementById('barcodeInput').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            let val = document.getElementById('barcodeInput').value.trim();
+            if (val) {
+                await lookupAndAdd(val.replace(/\.0+$/, '').trim(), false);
+                document.getElementById('barcodeInput').value = '';
+            }
+        }
+    });
+    document.getElementById('addOneBtn').onclick = async () => {
+        let raw = document.getElementById('barcodeInput').value.trim();
+        if (!raw) { showToast("ادخل باركود أو رقم صنف", true); return; }
+        await lookupAndAdd(raw.replace(/\.0+$/, '').trim(), false);
+        document.getElementById('barcodeInput').value = '';
+    };
+    document.getElementById('resetInventoryBtn').onclick = () => {
+        if (confirm("مسح كل الجرد؟")) {
+            const tx = db.transaction("inventory", "readwrite");
+            tx.objectStore("inventory").clear();
+            tx.oncomplete = () => { updateAllUI(); showToast("تم مسح الجرد"); };
+        }
+    };
+
+    // ========== الكاميرا (مستطيل في الأعلى) ==========
     async function listCameras() {
         try {
             const devices = await Html5Qrcode.getCameras();
@@ -217,63 +520,53 @@
                 select.appendChild(option);
             });
             if (devices.length > 0) {
-                let selectedCam = devices.length >= 3 ? devices[2] : devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('خلفية')) || devices[0];
+                let selectedCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('خلفية')) || devices[0];
                 currentCameraId = selectedCam.id;
                 select.value = currentCameraId;
-                showToast(`تم اختيار الكاميرا: ${selectedCam.label || 'افتراضية'}`, false, 1500);
             }
         } catch (err) { console.warn(err); showToast("تعذر الوصول للكاميرات", true); }
     }
 
-    async function startCamera(cameraId = null) {
-        if (scanningActive && html5QrScanner) {
-            await html5QrScanner.stop().catch(()=>{});
-            await html5QrScanner.clear().catch(()=>{});
+    function applyScanRegionStyle() {
+        const scanRegion = document.querySelector('#reader2__scan_region');
+        if (scanRegion) {
+            scanRegion.style.position = 'absolute';
+            scanRegion.style.top = '10%';
+            scanRegion.style.left = '50%';
+            scanRegion.style.transform = 'translateX(-50%)';
+            scanRegion.style.width = '280px';
+            scanRegion.style.height = '100px';
         }
-        scanningActive = false;
+    }
+
+    async function startCamera(cameraId = null) {
+        if (scanningActive) await closeCamera();
         const cameraDiv = document.getElementById('cameraDiv');
         cameraDiv.classList.remove('hidden');
         try {
-            const targetId = cameraId || currentCameraId;
+            const targetId = cameraId || currentCameraId || (availableCameras[0]?.id);
             if (!targetId) throw new Error("لا توجد كاميرا");
             html5QrScanner = new Html5Qrcode("reader2");
             await html5QrScanner.start(
                 { deviceId: { exact: targetId } },
-                {
-                    fps: 10,
-                    qrbox: { width: 280, height: 100 },
-                    aspectRatio: 1.777
-                },
+                { fps: 10, qrbox: { width: 280, height: 100 } },
                 async (decoded) => {
                     const now = Date.now();
                     if (now - lastScanTime < 2000) return;
                     lastScanTime = now;
                     let cleanVal = decoded.replace(/\.0+$/, '').trim();
-                    barcodeInput.value = cleanVal;
+                    document.getElementById('barcodeInput').value = cleanVal;
+                    initAudio();
                     await lookupAndAdd(cleanVal, true);
-                    barcodeInput.value = '';
+                    document.getElementById('barcodeInput').value = '';
                 },
                 (err) => { /* تجاهل الأخطاء */ }
             );
             scanningActive = true;
             currentCameraId = targetId;
-            // تحريك مستطيل المسح إلى الأعلى بعد التهيئة
-            setTimeout(() => {
-                const scanRegion = document.querySelector('#reader2__scan_region');
-                if (scanRegion) {
-                    scanRegion.style.position = 'absolute';
-                    scanRegion.style.top = '10%';
-                    scanRegion.style.left = '50%';
-                    scanRegion.style.transform = 'translateX(-50%)';
-                    scanRegion.style.width = '280px';
-                    scanRegion.style.height = '100px';
-                    scanRegion.style.border = '2px solid #0f2b3d';
-                    scanRegion.style.boxShadow = '0 0 0 4px rgba(15,43,61,0.3)';
-                    scanRegion.style.borderRadius = '12px';
-                }
-            }, 1000);
-            // تفعيل الصوت بعد أول نقرة
-            playBeep(true);
+            setTimeout(applyScanRegionStyle, 600);
+            initAudio();
+            playBeep(true); // تفعيل الصوت
         } catch (err) {
             showToast("خطأ في الكاميرا: " + err.message, true);
             cameraDiv.classList.add('hidden');
@@ -283,8 +576,8 @@
 
     async function closeCamera() {
         if (html5QrScanner && scanningActive) {
-            await html5QrScanner.stop().catch(()=>{});
-            await html5QrScanner.clear().catch(()=>{});
+            await html5QrScanner.stop().catch(() => {});
+            await html5QrScanner.clear().catch(() => {});
         }
         scanningActive = false;
         document.getElementById('cameraDiv').classList.add('hidden');
@@ -292,15 +585,14 @@
 
     async function switchCamera() {
         if (!availableCameras.length) await listCameras();
-        if (availableCameras.length === 0) { showToast("لا توجد كاميرات", true); return; }
+        if (availableCameras.length < 2) { showToast("لا توجد كاميرا أخرى", true); return; }
         const currentIndex = availableCameras.findIndex(c => c.id === currentCameraId);
         const nextIndex = (currentIndex + 1) % availableCameras.length;
-        const nextCam = availableCameras[nextIndex];
-        await closeCamera();
-        await startCamera(nextCam.id);
+        await startCamera(availableCameras[nextIndex].id);
     }
 
     document.getElementById('startCamBtn').onclick = async () => {
+        initAudio();
         if (!availableCameras.length) await listCameras();
         if (currentCameraId) startCamera(currentCameraId);
         else if (availableCameras.length) startCamera(availableCameras[0].id);
@@ -309,9 +601,235 @@
     document.getElementById('switchCamBtn').onclick = switchCamera;
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
-    // بقية الأكواد (تحديث الواجهة، تصدير، إعادة تعيين... الخ) كما هي في النسخة السابقة
-    // ...
-    // تم تضمين updateAllUI وكافة الوظائف كما في النسخة الكاملة السابقة، لم نكررها هنا للإيجاز
+    // ========== تحديث واجهة المستخدم ==========
+    async function updateAllUI() {
+        if (!db) return;
+        const tx = db.transaction(["inventory", "products", "stock"], "readonly");
+        const inv = await new Promise(r => tx.objectStore("inventory").getAll().onsuccess = e => r(e.target.result));
+        const prods = await new Promise(r => tx.objectStore("products").getAll().onsuccess = e => r(e.target.result));
+        const stock = await new Promise(r => tx.objectStore("stock").getAll().onsuccess = e => r(e.target.result));
+        inventory = inv;
+        document.getElementById('inventoryCount').innerText = inv.length;
+        document.getElementById('totalProductsStat').innerText = prods.length;
+        document.getElementById('totalInventoryStat').innerText = inv.length;
+        document.getElementById('sessionScansStat').innerText = inv.reduce((s, i) => s + i.qty, 0);
+
+        // قائمة الجرد
+        let invHtml = `<div class="inventory-list">`;
+        [...inv].reverse().forEach(item => {
+            invHtml += `<div class="product-card">
+                <div class="product-info">
+                    <div><strong>${escapeHtml(item.name)}</strong><br><small>رقم: ${escapeHtml(item.item_no || item.key)}</small></div>
+                    <div class="product-quantity">${item.qty}</div>
+                </div>
+                <div class="product-actions">
+                    <button class="icon-btn" onclick="window.updateQuantity('${item.key}', -1)"><i class="fas fa-minus-circle"></i> -1</button>
+                    <button class="icon-btn" onclick="window.updateQuantity('${item.key}', 1)"><i class="fas fa-plus-circle"></i> +1</button>
+                    <button class="icon-btn" onclick="window.editName('${item.key}')"><i class="fas fa-pen"></i> تعديل</button>
+                    <button class="icon-btn" onclick="window.deleteItem('${item.key}')"><i class="fas fa-trash"></i> حذف</button>
+                </div>
+            </div>`;
+        });
+        invHtml += `</div>`;
+        document.getElementById('inventoryListContainer').innerHTML = invHtml;
+
+        // جداول
+        document.getElementById('inventoryFullTable').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الكمية</th></thead><tbody>${inv.map(i => `<tr><td>${escapeHtml(i.key)}</td><td>${escapeHtml(i.name)}</td><td>${i.qty}</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th></thead><tbody>${stock.map(s => `<tr><td>${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody></table>`;
+
+        // المقارنة
+        const allCodes = new Set([...inv.map(i => i.key), ...stock.map(s => s.key)]);
+        let cmpRows = [...allCodes].map(k => {
+            let i = inv.find(x => x.key === k);
+            let s = stock.find(x => x.key === k);
+            let qi = i ? i.qty : 0;
+            let qs = s ? s.qty : 0;
+            let diff = qi - qs;
+            let name = (i || s)?.name || '';
+            let itemNo = (i || s)?.item_no || k;
+            return { itemNo, name, qs, qi, diff };
+        });
+
+        let filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+        let filtered = cmpRows;
+        if (filter === 'increase') filtered = filtered.filter(r => r.diff > 0);
+        else if (filter === 'decrease') filtered = filtered.filter(r => r.diff < 0);
+        else if (filter === 'match') filtered = filtered.filter(r => r.diff === 0);
+
+        document.getElementById('statsActualItems').innerText = stock.length;
+        document.getElementById('statsIncreaseCount').innerText = cmpRows.filter(r => r.diff > 0).length;
+        document.getElementById('statsDecreaseCount').innerText = cmpRows.filter(r => r.diff < 0).length;
+        document.getElementById('statsMatchCount').innerText = cmpRows.filter(r => r.diff === 0).length;
+        document.getElementById('statsScannedCount').innerText = inv.length;
+        document.getElementById('statsTotalDiff').innerText = filtered.reduce((a, b) => a + b.diff, 0);
+
+        document.getElementById('comparisonTableDiv').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الفعلي</th><th>المجرد</th><th>الفرق</th></thead><tbody>${filtered.map(r => {
+            let cls = r.diff > 0 ? 'diff-positive' : (r.diff < 0 ? 'diff-negative' : 'diff-zero');
+            let icon = r.diff > 0 ? '⬆️' : (r.diff < 0 ? '⬇️' : '✅');
+            return `<tr><td>${escapeHtml(r.itemNo)}</td><td>${escapeHtml(r.name)}</td><td>${r.qs}</td><td>${r.qi}</td><td class="${cls}">${icon} ${r.diff > 0 ? '+' : ''}${r.diff}</td></tr>`;
+        }).join('')}</tbody></table>`;
+
+        // المنتجات
+        document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead><th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th></thead><tbody>${prods.map(p => `<tr><td>${escapeHtml(p.item_no || '-')}</td><td>${escapeHtml(p.name || '-')}</td><td>${escapeHtml(p.barcode || '-')}</td><td><button class="icon-btn" onclick="window.deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody></table>`;
+    }
+
+    // وظائف التحكم في الجرد
+    window.updateQuantity = async function(key, delta) {
+        const tx = db.transaction("inventory", "readwrite");
+        const store = tx.objectStore("inventory");
+        const item = await new Promise(r => store.get(key).onsuccess = e => r(e.target.result));
+        if (item) {
+            item.qty = Math.max(0, item.qty + delta);
+            store.put(item);
+            await new Promise(r => { tx.oncomplete = r; });
+            updateAllUI();
+        }
+    };
+    window.editName = async function(key) {
+        const tx = db.transaction("inventory", "readwrite");
+        const store = tx.objectStore("inventory");
+        const item = await new Promise(r => store.get(key).onsuccess = e => r(e.target.result));
+        if (item) {
+            let newName = prompt("الاسم الجديد:", item.name);
+            if (newName && newName.trim()) {
+                item.name = newName.trim();
+                store.put(item);
+                await new Promise(r => { tx.oncomplete = r; });
+                updateAllUI();
+            }
+        }
+    };
+    window.deleteItem = async function(key) {
+        if (!confirm("حذف العنصر؟")) return;
+        const tx = db.transaction("inventory", "readwrite");
+        tx.objectStore("inventory").delete(key);
+        await new Promise(r => { tx.oncomplete = r; });
+        updateAllUI();
+    };
+    window.deleteProductById = async function(id) {
+        if (!confirm("حذف المنتج؟")) return;
+        const tx = db.transaction("products", "readwrite");
+        tx.objectStore("products").delete(id);
+        await new Promise(r => { tx.oncomplete = r; });
+        updateAllUI();
+    };
+
+    // أزرار التصفية
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        updateAllUI();
+    }));
+
+    // تصدير Excel
+    function exportToExcel(data, sheetName, fileName) {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, `${fileName}.xlsx`);
+    }
+    document.getElementById('exportInventoryBtn').onclick = () => {
+        const tx = db.transaction("inventory", "readonly");
+        tx.objectStore("inventory").getAll().onsuccess = e => {
+            let data = e.target.result.map(i => ({ "رقم الصنف": i.key, "الاسم": i.name, "الكمية": i.qty }));
+            exportToExcel(data, "الجرد", "جرد_" + Date.now());
+        };
+    };
+    document.getElementById('exportStockBtn').onclick = () => {
+        const tx = db.transaction("stock", "readonly");
+        tx.objectStore("stock").getAll().onsuccess = e => {
+            let data = e.target.result.map(s => ({ "رقم الصنف": s.key, "الاسم": s.name, "الكمية المرجعية": s.qty }));
+            exportToExcel(data, "المرجع", "مرجع_" + Date.now());
+        };
+    };
+    document.getElementById('exportProductsBtn').onclick = () => {
+        const tx = db.transaction("products", "readonly");
+        tx.objectStore("products").getAll().onsuccess = e => {
+            let data = e.target.result.map(p => ({ "رقم الصنف": p.item_no || '', "الاسم": p.name || '', "الباركود": p.barcode || '' }));
+            exportToExcel(data, "المنتجات", "منتجات_" + Date.now());
+        };
+    };
+    document.getElementById('exportCompareBtn').onclick = () => {
+        const tx = db.transaction(["inventory", "stock"], "readonly");
+        Promise.all([
+            new Promise(r => tx.objectStore("inventory").getAll().onsuccess = e => r(e.target.result)),
+            new Promise(r => tx.objectStore("stock").getAll().onsuccess = e => r(e.target.result))
+        ]).then(([inv, stock]) => {
+            let allKeys = new Set([...inv.map(i => i.key), ...stock.map(s => s.key)]);
+            let data = [...allKeys].map(k => {
+                let i = inv.find(x => x.key === k);
+                let s = stock.find(x => x.key === k);
+                return {
+                    "رقم الصنف": k,
+                    "الاسم": (i || s)?.name || '',
+                    "الفعلي": s ? s.qty : 0,
+                    "المجرد": i ? i.qty : 0,
+                    "الفرق": (i ? i.qty : 0) - (s ? s.qty : 0)
+                };
+            });
+            exportToExcel(data, "المقارنة", "مقارنة_" + Date.now());
+        });
+    };
+
+    // باقي الأزرار
+    document.getElementById('globalResetBtn').onclick = () => {
+        if (confirm("⚠️ سيتم حذف جميع البيانات نهائياً. متابعة؟")) {
+            if (html5QrScanner && scanningActive) html5QrScanner.stop().catch(() => {});
+            if (db) { db.close(); db = null; }
+            const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+            deleteRequest.onsuccess = () => window.location.reload();
+            deleteRequest.onerror = () => window.location.reload();
+            deleteRequest.onblocked = () => window.location.reload();
+        }
+    };
+    document.getElementById('globalManualBtn').onclick = () => document.getElementById('productModal').style.display = 'flex';
+    document.getElementById('closeModalBtn').onclick = () => document.getElementById('productModal').style.display = 'none';
+    document.getElementById('saveProductBtn').onclick = async () => {
+        let itemNo = document.getElementById('modalItemNo').value.trim();
+        let name = document.getElementById('modalName').value.trim();
+        let barcode = document.getElementById('modalBarcode').value.trim();
+        let qty = parseFloat(document.getElementById('modalQty').value) || 0;
+        if ((!itemNo && !barcode) || !name) { alert("يرجى ملء الحقول الأساسية"); return; }
+        const tx = db.transaction(["products", "stock"], "readwrite");
+        tx.objectStore("products").add({ id: generateUniqueId(), item_no: itemNo, barcode, name, sourceId: "manual" });
+        if (qty > 0) tx.objectStore("stock").put({ key: itemNo || barcode, name, qty });
+        await new Promise(r => { tx.oncomplete = r; });
+        document.getElementById('productModal').style.display = 'none';
+        updateAllUI(); showToast("تمت الإضافة");
+    };
+    document.getElementById('stockUploadArea').addEventListener('click', () => document.getElementById('stockFileInput').click());
+    document.getElementById('dbUploadArea').addEventListener('click', () => document.getElementById('dbFileInput').click());
+    document.getElementById('clearProductsBtn').onclick = () => {
+        if (confirm("مسح كل المنتجات؟")) {
+            const tx1 = db.transaction("products", "readwrite"); tx1.objectStore("products").clear();
+            const tx2 = db.transaction("uploadedFiles", "readwrite"); tx2.objectStore("uploadedFiles").clear();
+            Promise.all([new Promise(r => { tx1.oncomplete = r; }), new Promise(r => { tx2.oncomplete = r; })])
+                .then(() => { updateAllUI(); showToast("تم مسح المنتجات"); });
+        }
+    };
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', function() {
+        let target = this.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-pane'));
+        document.getElementById(target).classList.add('active-pane');
+        updateAllUI();
+    }));
+
+    // بدء قاعدة البيانات
+    function initDB() {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("products")) db.createObjectStore("products", { keyPath: "id", autoIncrement: false });
+            if (!db.objectStoreNames.contains("inventory")) db.createObjectStore("inventory", { keyPath: "key" });
+            if (!db.objectStoreNames.contains("stock")) db.createObjectStore("stock", { keyPath: "key" });
+            if (!db.objectStoreNames.contains("uploadedFiles")) db.createObjectStore("uploadedFiles", { keyPath: "id", autoIncrement: true });
+        };
+        req.onsuccess = (e) => { db = e.target.result; updateAllUI(); listCameras(); };
+        req.onerror = (e) => console.error(e);
+    }
+    initDB();
 </script>
 </body>
 </html>
