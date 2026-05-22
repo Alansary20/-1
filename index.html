@@ -289,7 +289,7 @@
     // -------------------------------------------------------------
     let db;
     const DB_NAME = "FinalJardSystem";
-    const DB_VERSION = 22;
+    const DB_VERSION = 23;
     let inventory = [];
     let html5QrScanner = null, scanningActive = false;
     let availableCameras = [];
@@ -415,7 +415,7 @@
     }
 
     // -------------------------------------------------------------
-    // رفع المنتجات – مع مفتاح فريد مضمون (إصلاح خطأ "Key already exists")
+    // رفع المنتجات
     // -------------------------------------------------------------
     let pendingProductFiles = [];
     document.getElementById('dbFileInput').addEventListener('change', (e) => {
@@ -685,14 +685,13 @@
         invHtml += `</div>`;
         document.getElementById('inventoryListContainer').innerHTML = invHtml;
         
-        // ربط الأحداث مباشرة بعد الإضافة
         document.querySelectorAll('.minus-btn').forEach(btn => btn.addEventListener('click', async (e) => { await updateInventoryQuantity(btn.getAttribute('data-key'), -1); }));
         document.querySelectorAll('.plus-btn').forEach(btn => btn.addEventListener('click', async (e) => { await updateInventoryQuantity(btn.getAttribute('data-key'), 1); }));
         document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', async (e) => { await editInventoryItem(btn.getAttribute('data-key')); }));
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { await deleteInventoryItem(btn.getAttribute('data-key')); }));
         
         renderInventoryTable();
-        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<td><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
+        document.getElementById('stockTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الكمية المرجعية</th> </thead><tbody>${stock.map(s => `<tr><td style="font-family:monospace;">${escapeHtml(s.key)}</td><td>${escapeHtml(s.name)}</td><td>${s.qty}</td></tr>`).join('')}</tbody>点心`;
         renderComparison();
         document.getElementById('productsTableContainer').innerHTML = `<table class="data-table"><thead>得到<th>رقم الصنف</th><th>الاسم</th><th>الباركود</th><th></th> </thead><tbody>${prods.map(p => `<tr><td style="font-family:monospace;">${escapeHtml(p.item_no||'-')}</td><td>${escapeHtml(p.name||'-')}</td><td style="font-family:monospace;">${escapeHtml(p.barcode||'-')}</td><td><button class="icon-btn" onclick="deleteProductById(${p.id})">حذف</button></td></tr>`).join('')}</tbody>点心`;
     }
@@ -794,6 +793,50 @@
     document.getElementById('switchCamBtn').onclick = switchCamera;
     document.getElementById('closeCamBtn').onclick = closeCamera;
 
+    // -------------------------------------------------------------
+    // دالة إعادة التعيين المحسّنة (تعمل على GitHub Pages)
+    // -------------------------------------------------------------
+    window.resetAll = function() {
+        if (confirm("⚠️ سيتم حذف جميع البيانات (المنتجات، الجرد، المرجع) بشكل نهائي. لا يمكن التراجع. متابعة؟")) {
+            showToast("جاري حذف البيانات...", false, 1500);
+            
+            // إغلاق اتصال قاعدة البيانات أولاً
+            if (db) {
+                db.close();
+                db = null;
+            }
+            
+            // حذف قاعدة البيانات
+            const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+            deleteRequest.onsuccess = function() {
+                console.log("Database deleted successfully");
+                // مسح أي بيانات متبقية في localStorage أو sessionStorage
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch(e) {}
+                // إعادة تحميل الصفحة بالقوة
+                window.location.href = window.location.href.split('#')[0];
+            };
+            deleteRequest.onerror = function() {
+                console.error("Error deleting database");
+                // محاولة بديلة: إعادة تحميل الصفحة بعد محاولة حذف IndexedDB
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+            };
+            deleteRequest.onblocked = function() {
+                console.warn("Database deletion blocked");
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+            };
+        }
+    };
+    
+    // ربط زر إعادة التعيين بالدالة الجديدة
+    document.getElementById('globalResetBtn').onclick = () => resetAll();
+
     // توابع الإضافة اليدوية والإعدادات العامة
     function initDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -811,7 +854,6 @@
         req.onsuccess = (e) => { db = e.target.result; updateAllUI(); listCameras(); };
         req.onerror = (e) => console.error(e);
     }
-    document.getElementById('globalResetBtn').onclick = () => { if (confirm("حذف كل البيانات نهائياً؟")) indexedDB.deleteDatabase(DB_NAME).onsuccess = () => location.reload(); };
     document.getElementById('globalManualBtn').onclick = () => document.getElementById('productModal').style.display = 'flex';
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('productModal').style.display = 'none';
     document.getElementById('saveProductBtn').onclick = async () => {
